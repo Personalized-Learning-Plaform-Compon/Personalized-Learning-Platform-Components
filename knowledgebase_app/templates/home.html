@@ -1,0 +1,15 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<title>Home Screen</title>
+<h1>Welcome to KnowledgeBase!</h1>
+
+<div class="logoContainer">
+    <img id="logo" src="{{ url_for('static', filename='images/study-icon.png') }}" alt="Logo">
+</div>
+
+<p id="siteDescription">A personalized learning platform with adapted quizzes for students and course content 
+    management for instructors and program directors</p>
+
+
+{% endblock %}
