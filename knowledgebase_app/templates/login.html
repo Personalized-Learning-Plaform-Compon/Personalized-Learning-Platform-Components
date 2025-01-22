@@ -2,5 +2,20 @@
 
 {% block content %}
 <title>Login/Register</title>
-<p>TODO</p>
+    <h1>Login</h1>
+    <div class="centered">
+        <form id="loginForm">
+            <label for="email">Email:</label>
+            <input type="email" class="form" id="email" placeholder="Enter email">
+
+            <label for="password">Password:</label>
+            <input type="password" class="form" id="password" placeholder="Enter password">
+
+            <button class="red-btn">Log in</button>
+
+            <a id="rgstr-btn" href="">Register</a>
+        </form>
+    </div>
+
+    
 {% endblock %}
