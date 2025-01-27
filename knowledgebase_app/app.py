@@ -35,6 +35,14 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    return render_template('login.html')
+    
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
     if request.method == 'POST':
         # Fetch form data
         userDetails = request.form
@@ -46,11 +54,8 @@ def login():
         cur.execute("INSERT INTO users(email, password) VALUES(%s, %s)",(email, hashed_password))
         mysql.connection.commit()
         cur.close()
-    return render_template('login.html')
-    
-@app.route('/about')
-def about():
-    return render_template('about.html')
+
+    return render_template('register.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

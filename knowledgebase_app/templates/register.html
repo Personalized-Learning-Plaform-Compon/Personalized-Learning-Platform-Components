@@ -1,0 +1,42 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<h1>Sign Up</h1>
+    <div class="centered">
+        <form id="loginForm" method="POST" action="/register">
+            <label for="fname">First Name:</label>
+            <input type="text" class="form" id="fname" name="fname" placeholder="Enter first name" required>
+
+            <label for="lname">Last Name:</label>
+            <input type="text" class="form" id="lname" name="lname" placeholder="Enter last name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" class="form" id="email" name="email" placeholder="Enter email" required>
+
+            <label for="password">Password:</label>
+            <input type="password" class="form" id="password" name="password" placeholder="Enter password" required>
+
+            <label for="conf-password">Confirm password:</label>
+            <input type="password" class="form" id="conf-password" name="conf-password" placeholder="Confirm password" required>
+
+            <label for="school">School:</label>
+            <input type="text" class="form" id="school" name="school" placeholder="Enter school" required>
+
+            <div id="user-type">
+                <input type="radio" id="student" name="user-type" value="Student" required>
+                <label for="student">Student</label>
+
+                <input type="radio" id="teacher" name="user-type" value="Teacher" required>
+                <label for="teacher">Teacher</label>
+
+                <input type="radio" id="pm" name="user-type" value="Program Manager" required>
+                <label for="pm">Program Manager</label>
+            </div>
+
+            <button class="red-btn">Sign Up</button>
+
+            <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
+        </form>
+    </div>
+
+{% endblock %}

@@ -10,10 +10,10 @@
     
             <label for="password">Password:</label>
             <input type="password" class="form" id="password" name="password" placeholder="Enter password" required>
-    
+
             <button class="red-btn" type="submit">Log in</button>
-    
-            <a id="rgstr-btn" href="/register">Register</a>
+
+            <a id="rgstr-btn" href="{{ url_for('register') }}">Sign Up</a>
         </form>
     </div>
 
