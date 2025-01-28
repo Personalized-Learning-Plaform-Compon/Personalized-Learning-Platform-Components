@@ -1,0 +1,17 @@
+<!-- For the user profile page -->
+ <!-- Directs users to the page that dispalys their information  -->
+
+ {% extends "index.html" %}
+
+{% block content %}
+<title>User Profile</title>
+<h1>Welcome, {{ user.username }}!</h1>
+<div class="profile-container">
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Member since:</strong> {{ user.date_joined.strftime('%B %d, %Y') }}</p>
+</div>
+
+<a href="{{ url_for('logout') }}" class="red-btn">Logout</a>
+{% endblock %}
+
+<!-- The profile.html template is a simple page that displays the user's username, email, and the date they joined the site. -->
