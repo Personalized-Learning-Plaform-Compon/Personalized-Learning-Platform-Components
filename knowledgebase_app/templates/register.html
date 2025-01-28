@@ -2,41 +2,96 @@
 
 {% block content %}
 <h1>Sign Up</h1>
-    <div class="centered">
-        <form id="loginForm" method="POST" action="/register">
-            <label for="fname">First Name:</label>
-            <input type="text" class="form" id="fname" name="fname" placeholder="Enter first name" required>
 
-            <label for="lname">Last Name:</label>
-            <input type="text" class="form" id="lname" name="lname" placeholder="Enter last name" required>
+<div class="centered">
+    <form id="loginForm" method="POST" action="/register" onsubmit="return validatePasswords()">
+        <label for="fname">First Name:</label>
+        <input type="text" class="form" id="fname" name="fname" placeholder="Enter first name" required>
 
-            <label for="email">Email:</label>
-            <input type="email" class="form" id="email" name="email" placeholder="Enter email" required>
+        <label for="lname">Last Name:</label>
+        <input type="text" class="form" id="lname" name="lname" placeholder="Enter last name" required>
 
-            <label for="password">Password:</label>
-            <input type="password" class="form" id="password" name="password" placeholder="Enter password" required>
+        <label for="email">Email:</label>
+        <input type="email" class="form" id="email" name="email" placeholder="Enter email" required>
 
-            <label for="conf-password">Confirm password:</label>
-            <input type="password" class="form" id="conf-password" name="conf-password" placeholder="Confirm password" required>
+        <label for="password">Password:</label>
+        <input type="password" class="form" id="password" name="password" placeholder="Enter password" required>
 
-            <label for="school">School:</label>
-            <input type="text" class="form" id="school" name="school" placeholder="Enter school" required>
+        <label for="conf-password">Confirm password:</label>
+        <input type="password" class="form" id="conf-password" name="conf-password" placeholder="Confirm password" required>
 
-            <div id="user-type">
-                <input type="radio" id="student" name="user-type" value="Student" required>
-                <label for="student">Student</label>
+        <label for="school">School:</label>
+        <input type="text" class="form" id="school" name="school" placeholder="Enter school" required>
 
-                <input type="radio" id="teacher" name="user-type" value="Teacher" required>
-                <label for="teacher">Teacher</label>
+        <div id="user-type">
+            <input type="radio" id="student" name="user-type" value="Student" required>
+            <label for="student">Student</label>
 
-                <input type="radio" id="pm" name="user-type" value="Program Manager" required>
-                <label for="pm">Program Manager</label>
-            </div>
+            <input type="radio" id="teacher" name="user-type" value="Teacher" required>
+            <label for="teacher">Teacher</label>
 
-            <button class="red-btn">Sign Up</button>
+            <input type="radio" id="pm" name="user-type" value="Program Manager" required>
+            <label for="pm">Program Manager</label>
+        </div>
 
-            <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
-        </form>
-    </div>
+        <!-- Flash messages near the sign-up button -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
 
+        <button class="red-btn">Sign Up</button>
+
+        <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
+    </form>
+</div>
+
+<script>
+    function validatePasswords() {
+        const password = document.getElementById("password").value;
+        const confPassword = document.getElementById("conf-password").value;
+
+        if (password !== confPassword) {
+            alert("Passwords do not match!");
+            return false;
+        }
+        return true;
+    }
+</script>
+
+<style>
+    /* Flash message styling */
+    .flash-messages .message {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .flash-messages .success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .flash-messages .warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+
+    .flash-messages .danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
 {% endblock %}
