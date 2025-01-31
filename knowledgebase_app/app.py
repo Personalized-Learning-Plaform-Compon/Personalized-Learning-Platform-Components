@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, make_response, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from models import Users, db
 import logging
 
 # initializing Flask app
@@ -18,17 +19,8 @@ app.config["SECRET_KEY"] = "yoursecretkey"
 app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:{PASSWORD}@{PUBLIC_IP_ADDRESS}/{DBNAME}?unix_socket=/cloudsql/{PROJECT_ID}:{INSTANCE_NAME}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
-db = SQLAlchemy(app)
-
-# User ORM for SQLAlchemy
-class Users(db.Model):
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    fname = db.Column(db.String(50), nullable=False)
-    lname = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(50), nullable=False, unique=True)
-    password = db.Column(db.String(200), nullable=False)
-    school = db.Column(db.String(50), nullable=False)
-    user_type = db.Column(db.String(50), nullable=False)
+# binding app with db
+db.init_app(app)
 
 @app.route('/')
 def home():
