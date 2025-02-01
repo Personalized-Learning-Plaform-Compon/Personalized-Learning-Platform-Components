@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_required, login_user, logout_user
 # import logging
 # from datetime import datetime
 from forms import LoginForm, RegistrationForm
-from models import Users, db
+from models import User, db
 
 app = Flask(__name__)
 
@@ -28,7 +28,7 @@ db.init_app(app)
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    return Users.query.get(int(user_id))
+    return User.query.get(int(user_id))
 
 
 @app.route('/')
@@ -39,7 +39,7 @@ def home():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = Users.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             try:
                 login_user(user)
@@ -59,7 +59,7 @@ def about():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = Users(email=form.email.data)
+        user = User(email=form.email.data)
         user.set_password(form.password.data)
         user.set_profile(form)
         db.session.add(user)
@@ -83,7 +83,7 @@ def profile():
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    user = Users.query.get(user_id)
+    user = User.query.get(user_id)
     if user is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))

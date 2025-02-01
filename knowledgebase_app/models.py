@@ -7,7 +7,9 @@ from forms import RegistrationForm
 db = SQLAlchemy()
 
 # User ORM for SQLAlchemy
-class Users(UserMixin, db.Model):
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     fname = db.Column(db.String(50), nullable=False)
     lname = db.Column(db.String(50), nullable=False)
