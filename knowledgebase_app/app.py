@@ -1,10 +1,13 @@
-from flask import Flask, render_template
+from flask import Flask,render_template, redirect, url_for, flash, session 
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager,UserMixin, login_required, login_user, logout_user
+# import logging
+# from datetime import datetime
+from forms import LoginForm, RegistrationForm
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 app = Flask(__name__)
-
-#stimulated user database
-users = {}
 
 # Google Cloud SQL configuration
 PASSWORD = "seniorproject"
@@ -20,8 +23,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
 db = SQLAlchemy(app)
 
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
 # User ORM for SQLAlchemy
-class Users(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     fname = db.Column(db.String(50), nullable=False)
     lname = db.Column(db.String(50), nullable=False)
@@ -30,73 +36,83 @@ class Users(db.Model):
     school = db.Column(db.String(50), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
 
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def set_profile(self, form: RegistrationForm):
+        self.fname = form.fname.data
+        self.lname = form.lname.data
+        self.email = form.email.data
+        self.school = form.school.data
+        self.user_type = form.user_type.data
+
+# User loader function
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
 @app.route('/')
 def home():
     return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        user = users.get(email, None)
-        
-        if user and user['password'] == password:
-            session['user'] = user
-            flash('Login Successful!', 'success')
-            return redirect(url_for('profile'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.check_password(form.password.data):
+            try:
+                login_user(user)
+                flash('Login Successful!', 'success')
+                return redirect(url_for('profile'))
+            except Exception as e:
+                print(f"Error occurred: {e}")
         else:
             flash('Login Failed! Please check your credentials', 'danger')
-    return render_template('login.html')
+    return render_template('login.html', form=form)
     
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == 'POST':
-        # Fetch form data
-        userDetails = request.form
-        fname = userDetails['fname']
-        lname = userDetails['lname']
-        email = userDetails['email']
-        password = userDetails['password']
-        school = userDetails['school']
-        user_type = userDetails['user-type']
-        # Hash the password
-        hashed_password = generate_password_hash(password)
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(email=form.email.data)
+        user.set_password(form.password.data)
+        user.set_profile(form)
+        db.session.add(user)
+        db.session.commit()
+        flash('Successfully registered.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
         
-        # checking if user already exists
-        user = Users.query.filter_by(email=email).first()
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
-        if not user:
-            try:
-                # creating Users object
-                user = Users(
-                    fname=fname,
-                    lname=lname,
-                    email=email,
-                    password=hashed_password,
-                    school=school,
-                    user_type=user_type
-                )
-                # adding the fields to users table
-                db.session.add(user)
-                db.session.commit()
-                # flash success message
-                flash('Successfully registered.', 'success')
-                return redirect(url_for('register'))
-            except Exception as e:
-                logging.error(f"Error occurred: {e}")
-                flash('Some error occurred!!', 'danger')
-                return redirect(url_for('register'))
-        else:
-            # if user already exists then send status as fail
-            flash('User already exists!!', 'warning')
-            return redirect(url_for('register'))
-
-    return render_template('register.html')
+@app.route('/profile')
+@login_required
+def profile():
+    user_id = session.get('_user_id')
+    # print(f"{session=}")
+    if user_id is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    user = User.query.get(user_id)
+    if user is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html', user=user)
 
 if __name__ == "__main__":
     with app.app_context():

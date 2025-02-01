@@ -1,14 +1,15 @@
 <!-- For the user profile page -->
- <!-- Directs users to the page that dispalys their information  -->
+<!-- Directs users to the page that displays their information  -->
 
- {% extends "index.html" %}
+{% extends "index.html" %}
 
 {% block content %}
 <title>User Profile</title>
-<h1>Welcome, {{ user.username }}!</h1>
+<h1>Welcome, {{ user.fname }} {{ user.lname }}!</h1>
 <div class="profile-container">
     <p><strong>Email:</strong> {{ user.email }}</p>
-    <p><strong>Member since:</strong> {{ user.date_joined.strftime('%B %d, %Y') }}</p>
+    <p><strong>School:</strong> {{ user.school }}</p>
+    <p><strong>User Type:</strong> {{ user.user_type }}</p>
 </div>
 
 <a href="{{ url_for('logout') }}" class="red-btn">Logout</a>

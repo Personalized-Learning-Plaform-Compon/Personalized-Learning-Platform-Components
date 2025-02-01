@@ -1,0 +1,50 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<h1>Sign Up</h1>
+
+<div class="centered">
+    <form id="loginForm" method="POST" action="">
+        {{ form.hidden_tag() }}
+        {{ form.email.label }} {{ form.email }}
+        {{form.fname.label}} {{form.fname}}
+        {{form.lname.label}} {{form.lname}}
+        {{ form.password.label }} {{ form.password }}
+        {{ form.password2.label }} {{ form.password2 }}
+        {{ form.school.label }} {{ form.school }}
+        {{ form.user_type.label }} {{ form.user_type }}
+        {{ form.submit }}
+
+
+        <!-- Flash messages near the sign-up button -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <button class="red-btn">Sign Up</button>
+
+        <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
+    </form>
+</div>
+
+<script>
+    function validatePasswords() {
+        const password = document.getElementById("password").value;
+        const confPassword = document.getElementById("conf-password").value;
+
+        if (password !== confPassword) {
+            alert("Passwords do not match!");
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

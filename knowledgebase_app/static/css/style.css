@@ -105,6 +105,38 @@ h1{
 #user-type{
     padding-bottom: 1rem;
 }
+
+/*Profile container styling*/
+.profile-container{
+    margin-top: 20px;
+    padding: 20pm;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+/*Button styling*/
+.blue-btn, .red-btn{
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+}
+
+.blue-btn{
+    background-color: #007bff;
+}
+
+.red-btn{
+    background-color: #dc3545;
+}   
+
+.blue-btn:hover, .red-btn:hover{
+    opacity: 0.8;
+}
   
 
 /* Flash message styling */

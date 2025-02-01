@@ -4,14 +4,11 @@
 <title>Login/Register</title>
     <h1>Login</h1>
     <div class="centered">
-        <form id="loginForm" method="POST" action="/login">
-            <label for="email">Email:</label>
-            <input type="email" class="form" id="email" name="email" placeholder="Enter email" required>
-    
-            <label for="password">Password:</label>
-            <input type="password" class="form" id="password" name="password" placeholder="Enter password" required>
-
-            <button class="red-btn" type="submit">Log in</button>
+        <form id="loginForm" method="POST" action="">
+            {{ form.hidden_tag() }}
+            {{ form.email.label }} {{ form.email }}
+            {{ form.password.label }} {{ form.password }}
+            {{ form.submit }}
 
             <a id="rgstr-btn" href="{{ url_for('register') }}">Sign Up</a>
         </form>
