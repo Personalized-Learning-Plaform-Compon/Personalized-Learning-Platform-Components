@@ -27,6 +27,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
 # User ORM for SQLAlchemy
+# Found in "user" database on MySQL server
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     fname = db.Column(db.String(50), nullable=False)
