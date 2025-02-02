@@ -32,3 +32,32 @@ class User(UserMixin, db.Model):
         self.user_type = form.user_type.data
 
 
+class Students(db.Model):
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    progress = db.Column(db.JSON, default=None)
+    feedback = db.Column(db.Text, default=None)
+    preferred_topics = db.Column(db.JSON, default=None)
+    strengths = db.Column(db.JSON, default=None)
+    weaknesses = db.Column(db.JSON, default=None)
+    
+class Teachers(db.Model):
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    classes = db.Column(db.String(255), nullable=False)
+
+class Quizzes(db.Model):
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    topic = db.Column(db.String(255), nullable=False)
+    difficulty = db.Column(db.Enum('Easy', 'Medium', 'Hard'), nullable=False)
+    format = db.Column(db.Enum('MCQ', 'Essay', 'True/False', 'Fill-in-the-blank'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    tags = db.Column(db.JSON, default=None)
+
+class Student_Progress(db.Model):
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    score = db.Column(db.DECIMAL(5, 2), nullable=False)
+    time_spent = db.Column(db.Integer, nullable=False)
+    attempt_date = db.Column(db.DateTime, nullable=False)
