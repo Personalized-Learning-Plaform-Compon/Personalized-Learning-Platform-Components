@@ -8,7 +8,7 @@
             {{ form.hidden_tag() }}
             {{ form.email.label }} {{ form.email }}
             {{ form.password.label }} {{ form.password }}
-            {{ form.submit }}
+            {{ form.submit(class="red-btn")  }}
 
             <a id="rgstr-btn" href="{{ url_for('register') }}">Sign Up</a>
         </form>
