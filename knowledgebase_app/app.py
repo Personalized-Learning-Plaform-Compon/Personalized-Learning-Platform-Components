@@ -1,35 +1,33 @@
-from flask import Flask, render_template, redirect, url_for, flash, session 
+import os
+from flask import Flask, render_template, redirect, url_for, flash, session
 from flask_login import LoginManager, login_required, login_user, logout_user
-# import logging
-# from datetime import datetime
+from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
 from models import User, db
 
+# Load environment variables from .env file
+load_dotenv()
+
 app = Flask(__name__)
 
-# Google Cloud SQL configuration
-PASSWORD = "seniorproject"
-PUBLIC_IP_ADDRESS = "34.45.162.72"
-DBNAME = "test"
-PROJECT_ID = "regal-reporter-449223-a4"
-INSTANCE_NAME = "knowledgebase"
+# Load configuration from environment variables
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# configuration
-app.config["SECRET_KEY"] = "yoursecretkey"
-app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://root:{PASSWORD}@{PUBLIC_IP_ADDRESS}/{DBNAME}?unix_socket=/cloudsql/{PROJECT_ID}:{INSTANCE_NAME}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
+# Initialize database and migration support
+db.init_app(app)
+migrate = Migrate(app, db)
 
+# Flask-Login setup
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
-# binding app with db
-db.init_app(app)
-
-# User loader function
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
 
 @app.route('/')
 def home():
@@ -50,7 +48,7 @@ def login():
         else:
             flash('Login Failed! Please check your credentials', 'danger')
     return render_template('login.html', form=form)
-    
+
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -67,18 +65,18 @@ def register():
         flash('Successfully registered.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
-        
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
+    flash('Logged out successfully!', 'success')
     return redirect(url_for('home'))
 
 @app.route('/profile')
 @login_required
 def profile():
     user_id = session.get('_user_id')
-    # print(f"{session=}")
     if user_id is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
