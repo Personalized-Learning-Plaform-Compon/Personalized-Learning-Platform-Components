@@ -16,7 +16,7 @@ INSTANCE_NAME = "knowledgebase"
 
 # configuration
 app.config["SECRET_KEY"] = "yoursecretkey"
-app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://root:{PASSWORD}@{PUBLIC_IP_ADDRESS}/{DBNAME}?unix_socket=/cloudsql/{PROJECT_ID}:{INSTANCE_NAME}"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:{PASSWORD}@{PUBLIC_IP_ADDRESS}/{DBNAME}?unix_socket=/cloudsql/{PROJECT_ID}:{INSTANCE_NAME}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
 login_manager = LoginManager(app)
@@ -89,6 +89,10 @@ def profile():
         return redirect(url_for('login'))
     
     return render_template('profile.html', user=user)
+
+@app.route('/survey')
+def survey():
+    return render_template('survey.html')
 
 if __name__ == "__main__":
     with app.app_context():

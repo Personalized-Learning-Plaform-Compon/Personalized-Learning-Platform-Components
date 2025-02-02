@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -7,7 +7,12 @@
     <body>
         <nav class="centered button" id="navbar">
             <ul>
-                <li><a href="{{ url_for('login') }}">Login/Register</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                    <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login/Register</a></li>
+                {% endif %}
                 <li><a href="{{ url_for('home') }}">Home</a></li>
                 <li><a href="{{ url_for('about') }}">About Us</a></li>
             </ul>
