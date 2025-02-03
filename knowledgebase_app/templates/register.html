@@ -13,7 +13,7 @@
         {{ form.password2.label }} {{ form.password2 }}
         {{ form.school.label }} {{ form.school }}
         {{ form.user_type.label }} {{ form.user_type }}
-        {{ form.submit }}
+        {{ form.submit(class="red-btn") }}
 
 
         <!-- Flash messages near the sign-up button -->
@@ -28,8 +28,6 @@
                 {% endif %}
             {% endwith %}
         </div>
-
-        <button class="red-btn">Sign Up</button>
 
         <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
     </form>
