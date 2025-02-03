@@ -1,7 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, flash, session 
 from flask_login import LoginManager, login_required, login_user, logout_user
-# import logging
-# from datetime import datetime
+from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
 from models import User, db
 
@@ -24,6 +23,7 @@ login_manager.login_view = "login"
 
 # binding app with db
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # User loader function
 @login_manager.user_loader

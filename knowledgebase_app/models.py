@@ -40,6 +40,7 @@ class Students(db.Model):
     preferred_topics = db.Column(db.JSON, default=None)
     strengths = db.Column(db.JSON, default=None)
     weaknesses = db.Column(db.JSON, default=None)
+    learning_style = db.Column(db.JSON, default=None)
     
 class Teachers(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
