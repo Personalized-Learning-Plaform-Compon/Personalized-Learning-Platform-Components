@@ -1,9 +1,9 @@
-from flask import Flask, render_template, redirect, url_for, flash, session 
+from flask import Flask, render_template, redirect, url_for, flash, session, sessionmaker 
 from flask_login import LoginManager, login_required, login_user, logout_user
 # import logging
 # from datetime import datetime
 from forms import LoginForm, RegistrationForm
-from models import User, db
+from models import User, db, Students
 
 app = Flask(__name__)
 
@@ -63,11 +63,41 @@ def register():
         user.set_password(form.password.data)
         user.set_profile(form)
         db.session.add(user)
+        
+        student = Students(
+            id=user.id,  
+            name=f"{form.fname.data} {form.lname.data}",  
+            progress=None,
+            feedback=None,
+            preferred_topics=None,
+            strengths=None,
+            weaknesses=None,
+        )
+        db.session.add(student)
+        
         db.session.commit()
         flash('Successfully registered.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
         
+#
+# Session = sessionmaker(bind=db.engine)
+# session = Session()
+# # Fetch all users
+# users = session.query(User).all()
+# for user in users:
+#     full_name = f"{user.fname} {user.lname}"
+#     new_student = Students(
+#         id=user.id,
+#         name=full_name,
+#         progress=None,
+#         feedback=None,
+#         preferred_topics=None,
+#         strengths=None,
+#         weaknesses=None
+#     )
+# session.commit()
+
 @app.route('/logout')
 @login_required
 def logout():
