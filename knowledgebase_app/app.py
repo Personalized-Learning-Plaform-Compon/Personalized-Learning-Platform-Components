@@ -1,14 +1,9 @@
-import os
-from flask import Flask, render_template, redirect, url_for, flash, session
+from flask import Flask, render_template, redirect, url_for, flash, session 
 from flask_login import LoginManager, login_required, login_user, logout_user
-from dotenv import load_dotenv
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+# import logging
+# from datetime import datetime
 from forms import LoginForm, RegistrationForm
 from models import User, db
-
-# Load environment variables from .env file
-load_dotenv()
 
 app = Flask(__name__)
 
@@ -25,6 +20,10 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
+# binding app with db
+db.init_app(app)
+
+# User loader function
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -57,15 +56,45 @@ def about():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data)
-        user.set_password(form.password.data)
-        user.set_profile(form)
-        db.session.add(user)
-        db.session.commit()
-        flash('Successfully registered.', 'success')
-        return redirect(url_for('login'))
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=form.email.data).first()
+        if existing_user:
+            flash('Email already registered. Please log in.', 'warning')
+            return redirect(url_for('register'))
+        
+        try:
+            user = User(
+                email=form.email.data,
+                fname=form.fname.data,
+                lname=form.lname.data,
+                school=form.school.data,
+                user_type=form.user_type.data
+            )
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            
+            student = Students(
+                user_id=user.id,  
+                name=f"{form.fname.data} {form.lname.data}",  
+                progress=None,
+                feedback=None,
+                preferred_topics=None,
+                strengths=None,
+                weaknesses=None,
+                learning_style=None
+            )
+            db.session.add(student)
+            db.session.commit()
+            flash('Successfully registered.', 'success')
+            return redirect(url_for('register'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred: {e}")
+            flash('An error occurred during registration. Please try again.', 'danger')
+    
     return render_template('register.html', form=form)
-
+        
 @app.route('/logout')
 @login_required
 def logout():
@@ -73,10 +102,11 @@ def logout():
     flash('Logged out successfully!', 'success')
     return redirect(url_for('home'))
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     user_id = session.get('_user_id')
+    # print(f"{session=}")
     if user_id is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
@@ -86,7 +116,30 @@ def profile():
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    return render_template('profile.html', user=user)
+    
+    # Update learning style
+    form = StudentProfileForm()
+    if form.validate_on_submit():
+        try:
+            student = Students.query.filter_by(user_id=user_id).first()
+            if student:
+                student.learning_style = form.learning_style.data
+                db.session.commit()
+                flash('Learning style updated successfully.', 'success')
+            else:
+                flash('Student not found.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred: {e}")
+            flash('An error occurred while updating learning style. Please try again.', 'danger')
+        return redirect(url_for('profile'))
+    else:
+        print(form.errors)  # Debugging: Print form errors to the console
+
+    
+
+    
+    return render_template('profile.html', user=user, form=form)
 
 @app.route('/survey')
 def survey():
@@ -96,3 +149,56 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
+
+@app.route('/progress/<int:student_id>')
+def get_progress(student_id):
+    # Query to calculate the average score for each topic for the given student
+    results = (
+        db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
+        .filter(Student_Progress.student_id == student_id)
+        .group_by(Student_Progress.topic)
+        .all()
+    )
+    # Format the result as a list of dictionaries
+    progress = [{'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
+
+    return jsonify(progress)
+
+def analyze_strengths_weaknesses(student_id):
+    results = (
+        db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
+        .filter(Student_Progress.student_id == student_id)
+        .group_by(Student_Progress.topic)
+        .all()
+    )
+
+    strengths = [topic for topic, avg_score in results if avg_score > 80]
+    weaknesses = [topic for topic, avg_score in results if avg_score < 50]
+
+    return {"strengths": strengths, "weaknesses": weaknesses}
+
+def recommend_content(student_id):
+    analysis = analyze_strengths_weaknesses(student_id)
+    strengths = analysis['strengths']
+    weaknesses = analysis['weaknesses']
+
+    # Recommend for weaknesses
+    weak_recommendations = (
+        db.session.query(Quizzes.id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
+        .filter(Quizzes.topic.in_(weaknesses), Quizzes.difficulty == 'Easy')
+        .limit(5)
+        .all()
+    )
+
+    # Recommend for strengths
+    strong_recommendations = (
+        db.session.query(Quizzes.id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
+        .filter(Quizzes.topic.in_(strengths), Quizzes.difficulty == 'Hard')
+        .limit(5)
+        .all()
+    )
+
+    return {"weak_areas": weak_recommendations, "strong_areas": strong_recommendations}
+
+

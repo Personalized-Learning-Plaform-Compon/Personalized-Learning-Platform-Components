@@ -8,11 +8,22 @@
             {{ form.hidden_tag() }}
             {{ form.email.label }} {{ form.email }}
             {{ form.password.label }} {{ form.password }}
-            {{ form.submit }}
+            {{ form.submit(class="red-btn")  }}
 
             <a id="rgstr-btn" href="{{ url_for('register') }}">Sign Up</a>
         </form>
     </div>
 
-    
+<!-- Flash messages -->
+<div class="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="message {{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</div>    
 {% endblock %}

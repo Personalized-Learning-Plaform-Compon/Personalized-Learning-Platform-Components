@@ -4,7 +4,7 @@
 <h1>Sign Up</h1>
 
 <div class="centered">
-    <form id="loginForm" method="POST" action="">
+    <form id="loginForm" method="POST" action="/register" onsubmit="return validatePasswords()">
         {{ form.hidden_tag() }}
         {{ form.email.label }} {{ form.email }}
         {{form.fname.label}} {{form.fname}}
@@ -12,8 +12,8 @@
         {{ form.password.label }} {{ form.password }}
         {{ form.password2.label }} {{ form.password2 }}
         {{ form.school.label }} {{ form.school }}
-        {{ form.user_type.label }} {{ form.user_type }}
-        {{ form.submit }}
+         {{ form.user_type }}
+        {{ form.submit(class="red-btn") }}
 
 
         <!-- Flash messages near the sign-up button -->
@@ -28,9 +28,6 @@
                 {% endif %}
             {% endwith %}
         </div>
-
-        <button class="red-btn">Sign Up</button>
-
         <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
     </form>
 </div>
@@ -38,7 +35,7 @@
 <script>
     function validatePasswords() {
         const password = document.getElementById("password").value;
-        const confPassword = document.getElementById("conf-password").value;
+        const confPassword = document.getElementById("password2").value;
 
         if (password !== confPassword) {
             alert("Passwords do not match!");
