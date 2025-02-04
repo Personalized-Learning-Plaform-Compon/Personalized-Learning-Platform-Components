@@ -2,7 +2,8 @@ from flask import Flask, render_template, redirect, request, url_for, flash, ses
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress
+from models import User, db, Students, Student_Progress, Quizzes
+
 
 app = Flask(__name__)
 
@@ -162,3 +163,41 @@ def get_progress(student_id):
     progress = [{'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
 
     return jsonify(progress)
+
+def analyze_strengths_weaknesses(student_id):
+    results = (
+        db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
+        .filter(Student_Progress.student_id == student_id)
+        .group_by(Student_Progress.topic)
+        .all()
+    )
+
+    strengths = [topic for topic, avg_score in results if avg_score > 80]
+    weaknesses = [topic for topic, avg_score in results if avg_score < 50]
+
+    return {"strengths": strengths, "weaknesses": weaknesses}
+
+def recommend_content(student_id):
+    analysis = analyze_strengths_weaknesses(student_id)
+    strengths = analysis['strengths']
+    weaknesses = analysis['weaknesses']
+
+    # Recommend for weaknesses
+    weak_recommendations = (
+        db.session.query(Quizzes.id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
+        .filter(Quizzes.topic.in_(weaknesses), Quizzes.difficulty == 'Easy')
+        .limit(5)
+        .all()
+    )
+
+    # Recommend for strengths
+    strong_recommendations = (
+        db.session.query(Quizzes.id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
+        .filter(Quizzes.topic.in_(strengths), Quizzes.difficulty == 'Hard')
+        .limit(5)
+        .all()
+    )
+
+    return {"weak_areas": weak_recommendations, "strong_areas": strong_recommendations}
+
+
