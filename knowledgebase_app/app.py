@@ -1,8 +1,8 @@
-from flask import Flask, render_template, redirect, request, url_for, flash, session
+from flask import Flask, render_template, redirect, request, url_for, flash, session, jsonify
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students
+from models import User, db, Students, Student_Progress
 
 app = Flask(__name__)
 
@@ -147,3 +147,18 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
+
+@app.route('/progress/<int:student_id>')
+def get_progress(student_id):
+    # Query to calculate the average score for each topic for the given student
+    results = (
+        db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
+        .filter(Student_Progress.student_id == student_id)
+        .group_by(Student_Progress.topic)
+        .all()
+    )
+    # Format the result as a list of dictionaries
+    progress = [{'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
+
+    return jsonify(progress)
