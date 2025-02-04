@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, session, sessionmaker 
+from flask import Flask, render_template, redirect, url_for, flash, session
 from flask_login import LoginManager, login_required, login_user, logout_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
@@ -59,44 +59,45 @@ def about():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data)
-        user.set_password(form.password.data)
-        user.set_profile(form)
-        db.session.add(user)
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=form.email.data).first()
+        if existing_user:
+            flash('Email already registered. Please log in.', 'warning')
+            return redirect(url_for('register'))
         
-        student = Students(
-            id=user.id,  
-            name=f"{form.fname.data} {form.lname.data}",  
-            progress=None,
-            feedback=None,
-            preferred_topics=None,
-            strengths=None,
-            weaknesses=None,
-        )
-        db.session.add(student)
-        
-        db.session.commit()
-        flash('Successfully registered.', 'success')
-        return redirect(url_for('login'))
+        try:
+            user = User(
+                email=form.email.data,
+                fname=form.fname.data,
+                lname=form.lname.data,
+                school=form.school.data,
+                user_type=form.user_type.data
+            )
+            user.set_password(form.password.data)
+            db.session.add(user)
+            
+            student = Students(
+                id=user.id,  
+                name=f"{form.fname.data} {form.lname.data}",  
+                progress=None,
+                feedback=None,
+                preferred_topics=None,
+                strengths=None,
+                weaknesses=None,
+                learning_style=None
+            )
+            db.session.add(student)
+            
+            db.session.commit()
+            flash('Successfully registered.', 'success')
+            return redirect(url_for('register'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred: {e}")
+            flash('An error occurred during registration. Please try again.', 'danger')
+    
     return render_template('register.html', form=form)
         
-#
-# Session = sessionmaker(bind=db.engine)
-# session = Session()
-# # Fetch all users
-# users = session.query(User).all()
-# for user in users:
-#     full_name = f"{user.fname} {user.lname}"
-#     new_student = Students(
-#         id=user.id,
-#         name=full_name,
-#         progress=None,
-#         feedback=None,
-#         preferred_topics=None,
-#         strengths=None,
-#         weaknesses=None
-#     )
-# session.commit()
 
 @app.route('/logout')
 @login_required
