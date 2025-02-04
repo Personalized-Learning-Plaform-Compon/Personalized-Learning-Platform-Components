@@ -1,7 +1,7 @@
-from flask import Flask, render_template, redirect, url_for, flash, session
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask import Flask, render_template, redirect, request, url_for, flash, session
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_migrate import Migrate
-from forms import LoginForm, RegistrationForm
+from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students
 
 app = Flask(__name__)
@@ -75,9 +75,10 @@ def register():
             )
             user.set_password(form.password.data)
             db.session.add(user)
+            db.session.commit()
             
             student = Students(
-                id=user.id,  
+                user_id=user.id,  
                 name=f"{form.fname.data} {form.lname.data}",  
                 progress=None,
                 feedback=None,
@@ -87,7 +88,6 @@ def register():
                 learning_style=None
             )
             db.session.add(student)
-            
             db.session.commit()
             flash('Successfully registered.', 'success')
             return redirect(url_for('register'))
@@ -105,21 +105,39 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    user_id = session.get('_user_id')
-    # print(f"{session=}")
-    if user_id is None:
-        flash("User not found. Please try again.", 'danger')
-        return redirect(url_for('login'))
-    
+    user_id = current_user.id
     user = User.query.get(user_id)
     if user is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    return render_template('profile.html', user=user)
+    
+    # Update learning style
+    form = StudentProfileForm()
+    if form.validate_on_submit():
+        try:
+            student = Students.query.filter_by(user_id=user_id).first()
+            if student:
+                student.learning_style = form.learning_style.data
+                db.session.commit()
+                flash('Learning style updated successfully.', 'success')
+            else:
+                flash('Student not found.', 'danger')
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred: {e}")
+            flash('An error occurred while updating learning style. Please try again.', 'danger')
+        return redirect(url_for('profile'))
+    else:
+        print(form.errors)  # Debugging: Print form errors to the console
+
+    
+
+    
+    return render_template('profile.html', user=user, form=form)
 
 @app.route('/survey')
 def survey():

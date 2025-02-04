@@ -8,7 +8,7 @@ db = SQLAlchemy()
 
 # User ORM for SQLAlchemy
 class User(UserMixin, db.Model):
-    __tablename__ = 'users'
+    __tablename__ = 'users'  
     
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     fname = db.Column(db.String(50), nullable=False)
@@ -17,30 +17,33 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(200), nullable=False)
     school = db.Column(db.String(50), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
-    
+
     def set_password(self, password):
         self.password = generate_password_hash(password)
-    
+
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-    def set_profile(self, form: RegistrationForm):
+    def set_profile(self, form):
         self.fname = form.fname.data
         self.lname = form.lname.data
         self.email = form.email.data
         self.school = form.school.data
         self.user_type = form.user_type.data
 
-
 class Students(db.Model):
+    __tablename__ = 'students'  
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Match the table name specified in User
     name = db.Column(db.String(255), nullable=False)
     progress = db.Column(db.JSON, default=None)
     feedback = db.Column(db.Text, default=None)
-    preferred_topics = db.Column(db.JSON, default=None)
-    strengths = db.Column(db.JSON, default=None)
-    weaknesses = db.Column(db.JSON, default=None)
-    learning_style = db.Column(db.JSON, default=None)
+    preferred_topics = db.Column(db.String(50), default=None)
+    strengths = db.Column(db.String(50), default=None)
+    weaknesses = db.Column(db.String(50), default=None)
+    learning_style = db.Column(db.String(50), default=None)
+    user = db.relationship('User', backref=db.backref('students', lazy=True))
+
     
 class Teachers(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
