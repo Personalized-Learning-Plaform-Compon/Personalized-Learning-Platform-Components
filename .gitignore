@@ -1,3 +1,5 @@
 .venv
-__pycache__
+.my_virtual_env
+__pycache__/
+knowledge_base/__pycache__
 .env

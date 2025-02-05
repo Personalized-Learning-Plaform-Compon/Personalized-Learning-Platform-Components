@@ -2,7 +2,6 @@ import os
 from flask import Flask, render_template, redirect, url_for, flash, session, jsonify
 from flask_login import LoginManager, login_required, login_user, logout_user
 from dotenv import load_dotenv
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes
@@ -62,7 +61,7 @@ def register():
         existing_user = User.query.filter_by(email=form.email.data).first()
         if existing_user:
             flash('Email already registered. Please log in.', 'warning')
-            return redirect(url_for('register'))
+            return redirect(url_for('login'))
         
         try:
             user = User(
@@ -89,7 +88,7 @@ def register():
             db.session.add(student)
             db.session.commit()
             flash('Successfully registered.', 'success')
-            return redirect(url_for('register'))
+            return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
             print(f"Error occurred: {e}")
