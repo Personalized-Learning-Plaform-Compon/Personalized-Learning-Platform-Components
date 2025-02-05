@@ -1,9 +1,14 @@
-from flask import Flask, render_template, redirect, url_for, flash, session 
+import os
+from flask import Flask, render_template, redirect, url_for, flash, session, jsonify
 from flask_login import LoginManager, login_required, login_user, logout_user
-# import logging
-# from datetime import datetime
-from forms import LoginForm, RegistrationForm
-from models import User, db
+from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from forms import LoginForm, RegistrationForm, StudentProfileForm
+from models import User, db, Students, Student_Progress, Quizzes
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -19,9 +24,6 @@ migrate = Migrate(app, db)
 # Flask-Login setup
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-
-# binding app with db
-db.init_app(app)
 
 # User loader function
 @login_manager.user_loader
