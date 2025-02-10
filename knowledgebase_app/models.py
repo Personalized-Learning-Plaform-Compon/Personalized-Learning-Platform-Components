@@ -46,8 +46,9 @@ class Teachers(db.Model):
     __tablename__ = 'teachers'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    classes = db.Column(db.String(255), nullable=False)
+    classes = db.Column(db.JSON, default={})
 
 class Quizzes(db.Model):
     __tablename__ = 'quizzes'
