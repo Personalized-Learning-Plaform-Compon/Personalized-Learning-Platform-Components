@@ -155,6 +155,10 @@ def profile():
 def survey():
     return render_template('survey.html')
 
+@app.route('/courses')
+def courses():
+    return render_template('courses.html')
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

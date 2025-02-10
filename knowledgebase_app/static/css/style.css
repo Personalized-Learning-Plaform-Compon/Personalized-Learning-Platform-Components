@@ -134,7 +134,9 @@ h1{
     opacity: 0.8;
 }
   
-
+.form-group{
+    margin-bottom: 3rem;
+}
 /* Flash message styling */
 .flash-messages .message {
     margin-top: 10px;
