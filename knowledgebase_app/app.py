@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, redirect, url_for, flash, session, jsonify
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
@@ -141,6 +141,21 @@ def profile():
 
     
     return render_template('profile.html', user=user, form=form)
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    user = current_user
+    student = Students.query.filter_by(user_id=user.id).first()
+    if not student:
+        flash('Student not found. Please try again.', 'danger')
+        return redirect(url_for('profile'))
+    
+    #assuming that student.progress is a JSON pbject
+    courses = [] #assuming this is where the courses from the database will go
+                
+    return render_template('dashboard.html', user=user, courses=courses)
+
 
 @app.route('/survey')
 def survey():

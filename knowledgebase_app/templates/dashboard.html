@@ -1,11 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-</head>
-<body>
-    <h1>Welcome your Dashboard!</h1>
-    <a href="{{ url_for('logout') }}">Logout</a>
+{% extends 'index.html' %}
+
+{% block content %}
+<title>Student Dashboard</title>
+<h1>Welcome, {{ user.fname }} {{ user.lname }}!</h1>
+
+<h2>Your Enrolled Courses</h2>
+{% if courses %}
+    {% for course in courses %}
+        <div class="course-container">
+            <h3>{{ course.name }}</h3>
+            <p>{{ course.description }}</p>
+
+            <!-- Progress Bar -->
+            <progress value="{{ course.progress }}" max="100"></progress>
+            <p>{{ course.progress }}% Completed</p>
+
+            <p><strong>Lessons Completed:</strong> {{ course.lessons_completed }} / {{ course.total_lessons }}</p>
+            <p><strong>Time Spent:</strong> {{ course.time_spent }} minutes</p>
+
+            <!-- Form to Update Progress -->
+            <form method="POST" action="{{ url_for('update_progress') }}">
+                <input type="hidden" name="course_id" value="{{ course.id }}">
+                <div class="form-group">
+                    <label for="lessons_completed">Mark Lessons as Completed:</label>
+                    <input type="number" name="lessons_completed" min="0" max="{{ course.total_lessons }}" value="{{ course.lessons_completed }}">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Update Progress</button>
+                </div>
+            </form>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>You are not enrolled in any courses yet.</p>
+{% endif %}
+
+<a href="{{ url_for('logout') }}" class="red-btn">Logout</a>
+{% endblock %}
