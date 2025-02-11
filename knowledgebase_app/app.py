@@ -180,6 +180,35 @@ if __name__ == "__main__":
         db.create_all()
     app.run(debug=True)
 
+def generate_quiz(topic_text, num_questions=5):
+    """Generate quiz questions from a given topic text using Huggingface API."""
+    quiz_questions = []
+    
+    for i in range(num_questions):
+        prompt = f"Generate a question from the following text: {topic_text}"
+        response = requests.post(
+            "https://api-inference.huggingface.co/models/t5-small",
+            headers={"Authorization": f"Bearer {os.getenv('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')}"},
+            json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
+        )
+        generated_text = response.json()[0]['generated_text']
+        
+        quiz_questions.append(generated_text)
+    
+    return quiz_questions
+
+@app.route("/generate_quiz", methods=["POST"])
+def generate_quiz_endpoint():
+    data = request.get_json()
+    topic_text = data.get("topic_text", "")
+    num_questions = data.get("num_questions", 5)
+
+    if not topic_text:
+        return jsonify({"error": "Please provide a topic_text"}), 400
+
+    quiz_questions = generate_quiz(topic_text, num_questions)
+    
+    return jsonify({"quiz_questions": quiz_questions})
 
 @app.route('/progress/<int:student_id>')
 def get_progress(student_id):
