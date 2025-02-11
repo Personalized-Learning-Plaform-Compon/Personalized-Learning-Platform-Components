@@ -10,9 +10,13 @@
                 <!-- TO DO: Need to differentiate between what shows for teachers and students-->
                 {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('profile') }}">Profile</a></li>
-                    <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li> <!-- TO DO: Learning style selection and quiz only needs to show for students -->
-                    <li><a href="{{url_for('dashboard')}}">Student Dashboard</a></li>
-                    <li><a href="{{ url_for('courses') }}">Courses</a></li>
+                    {% if current_user.user_type == "student" %}
+                        <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li> <!-- TO DO: Learning style selection and quiz only needs to show for students -->
+                        <li><a href="{{ url_for('dashboard') }}">Student Dashboard</a></li>
+                    {% elif current_user.user_type == "teacher" %}
+                        <!-- TO DO: add teacher view dashboard-->
+                        <li><a href="{{ url_for('courses') }}">Courses</a></li>
+                    {% endif %}
                 {% else %}
                     <li><a href="{{ url_for('login') }}">Login/Register</a></li>
                 {% endif %}
