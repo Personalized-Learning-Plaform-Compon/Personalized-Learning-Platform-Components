@@ -188,7 +188,7 @@ def generate_quiz(topic_text, num_questions=5):
         prompt = f"Generate a question from the following text: {topic_text}"
         response = requests.post(
             "https://api-inference.huggingface.co/models/t5-small",
-            headers={"Authorization": f"Bearer {os.getenv('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')}"},
+            headers={"Authorization": f"Bearer {os.getenv('huggingface-api-key')}"},
             json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
         )
         generated_text = response.json()[0]['generated_text']
