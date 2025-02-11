@@ -7,9 +7,10 @@
     <body>
         <nav class="centered button" id="navbar">
             <ul>
+                <!-- TO DO: Need to differentiate between what shows for teachers and students-->
                 {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('profile') }}">Profile</a></li>
-                    <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li>
+                    <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li> <!-- TO DO: Learning style selection and quiz only needs to show for students -->
                     <li><a href="{{url_for('dashboard')}}">Student Dashboard</a></li>
                     <li><a href="{{ url_for('courses') }}">Courses</a></li>
                 {% else %}

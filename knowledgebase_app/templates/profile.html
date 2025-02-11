@@ -24,6 +24,7 @@
     {% endwith %}
 </div>
 
+<!-- TO DO : Learning style selection needs to be changed so only students can see this option -->
 <!-- Form to select learning style -->
 <form method="POST" action="{{ url_for('profile') }}">
     {{ form.hidden_tag() }}
@@ -38,3 +39,4 @@
 {% endblock %}
 
 <!-- The profile.html template is a simple page that displays the user's username, email, and the date they joined the site. -->
+
