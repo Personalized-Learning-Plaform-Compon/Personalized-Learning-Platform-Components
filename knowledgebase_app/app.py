@@ -220,10 +220,10 @@ def get_progress(student_id):
         .all()
     )
     # Format the result as a list of dictionaries
-    progress = [{'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
+    progress = [{'student_id': student_id, 'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
 
     return jsonify(progress)
-
+@app.route('/strengths/weakness/<int:student_id>')
 def analyze_strengths_weaknesses(student_id):
     results = (
         db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
@@ -232,10 +232,10 @@ def analyze_strengths_weaknesses(student_id):
         .all()
     )
 
-    strengths = [topic for topic, avg_score in results if avg_score > 80]
-    weaknesses = [topic for topic, avg_score in results if avg_score < 50]
+    strengths = [topic for topic, avg_score in results if avg_score >= 75]
+    weaknesses = [topic for topic, avg_score in results if avg_score < 75]
 
-    return {"strengths": strengths, "weaknesses": weaknesses}
+    return {"student_id": student_id, "strengths": strengths, "weaknesses": weaknesses}
 
 def recommend_content(student_id):
     analysis = analyze_strengths_weaknesses(student_id)
