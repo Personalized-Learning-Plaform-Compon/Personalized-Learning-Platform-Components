@@ -11,6 +11,7 @@
     <p><strong>School:</strong> {{ user.school }}</p>
     <p><strong>User Type:</strong> {{ user.user_type }}</p>
 </div>
+
 <!-- Flash messages -->
 <div class="flash-messages">
     {% with messages = get_flashed_messages(with_categories=True) %}
@@ -24,8 +25,9 @@
     {% endwith %}
 </div>
 
-<!-- TO DO : Learning style selection needs to be changed so only students can see this option -->
-<!-- Form to select learning style -->
+
+<!-- Form to select learning style : Only shows for students -->
+ {%if user.user_type == 'student' %}
 <form method="POST" action="{{ url_for('profile') }}">
     {{ form.hidden_tag() }}
     <div class="form-group">
@@ -34,6 +36,7 @@
         {{ form.submit(class="red-btn") }}
     </div>
 </form>
+{% endif %}
 
 <a href="{{ url_for('logout') }}" class="red-btn">Logout</a>
 {% endblock %}
