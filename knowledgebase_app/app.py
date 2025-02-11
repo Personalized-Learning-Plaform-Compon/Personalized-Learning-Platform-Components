@@ -150,8 +150,9 @@ def dashboard():
     if not student:
         flash('Student not found. Please try again.', 'danger')
         return redirect(url_for('profile'))
-    
-    #assuming that student.progress is a JSON pbject
+
+
+    # TODO: design Course model and update the query below
     courses = [] #assuming this is where the courses from the database will go
                 
     return render_template('dashboard.html', user=user, courses=courses)
