@@ -4,7 +4,7 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes
+from models import User, db, Students, Student_Progress, Quizzes, Teachers
 
 # Load environment variables from .env file
 load_dotenv()
@@ -75,17 +75,26 @@ def register():
             db.session.add(user)
             db.session.commit()
             
-            student = Students(
-                user_id=user.id,  
-                name=f"{form.fname.data} {form.lname.data}",  
-                progress=None,
-                feedback=None,
-                preferred_topics=None,
-                strengths=None,
-                weaknesses=None,
-                learning_style=None
-            )
-            db.session.add(student)
+            if user.user_type == 'student':
+                registered_user = Students(
+                    user_id=user.id,  
+                    name=f"{form.fname.data} {form.lname.data}",  
+                    progress=None,
+                    feedback=None,
+                    preferred_topics=None,
+                    strengths=None,
+                    weaknesses=None,
+                    learning_style=None
+                )
+
+            elif user.user_type == 'teacher':
+                registered_user = Teachers(
+                    user_id=user.id,
+                    name=f"{form.fname.data} {form.lname.data}",
+                    classes=None,
+                )
+
+            db.session.add(registered_user)
             db.session.commit()
             flash('Successfully registered.', 'success')
             return redirect(url_for('login'))
@@ -161,6 +170,10 @@ def dashboard():
 @app.route('/survey')
 def survey():
     return render_template('survey.html')
+
+@app.route('/courses')
+def courses():
+    return render_template('courses.html')
 
 if __name__ == "__main__":
     with app.app_context():

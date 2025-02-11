@@ -11,6 +11,7 @@
                     <li><a href="{{ url_for('profile') }}">Profile</a></li>
                     <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li>
                     <li><a href="{{url_for('dashboard')}}">Student Dashboard</a></li>
+                    <li><a href="{{ url_for('courses') }}">Courses</a></li>
                 {% else %}
                     <li><a href="{{ url_for('login') }}">Login/Register</a></li>
                 {% endif %}
