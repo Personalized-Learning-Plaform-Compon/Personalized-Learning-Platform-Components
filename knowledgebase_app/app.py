@@ -11,17 +11,18 @@ if os.getenv("FLASK_ENV") is None:
     os.environ["FLASK_ENV"] = "development"
 
 # Load environment variables from .env file
-env_file = '.env'
+app = Flask(__name__)
+env_file = '..\\.env'
+load_dotenv(env_file, override=True)
+
 if os.getenv("FLASK_ENV") == 'testing':
     env_file = '.env.test'
-
-load_dotenv(env_file, override=True)
-app = Flask(__name__)
-
-# Load configuration from environment variables
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"  # Use an in-memory test DB
+    app.config["SECRET_KEY"] = "testing"  # Set a secret key for the session
+else:
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize database and migration support
 db.init_app(app)
