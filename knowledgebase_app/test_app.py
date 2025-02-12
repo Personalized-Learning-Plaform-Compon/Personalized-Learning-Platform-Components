@@ -1,9 +1,15 @@
+import os
+
+# Set the environment variable for testing BEFORE importing app.py
+os.environ["FLASK_ENV"] = "testing"
+
 import pytest, pprint
 from app import app, Student_Progress, Quizzes
 from sqlalchemy import text
 from models import db
 from models import Students, User
 from datetime import datetime
+
 
 @pytest.fixture
 def client():

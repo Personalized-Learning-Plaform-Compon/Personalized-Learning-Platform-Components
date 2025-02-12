@@ -6,10 +6,15 @@ from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment
 
+# Automatically set FLASK_ENV to "development" if not explicitly set
+if os.getenv("FLASK_ENV") is None:
+    os.environ["FLASK_ENV"] = "development"
+
 # Load environment variables from .env file
 env_file = '.env'
 if os.getenv("FLASK_ENV") == 'testing':
     env_file = '.env.test'
+
 load_dotenv(env_file, override=True)
 app = Flask(__name__)
 
