@@ -14,10 +14,23 @@
     <div class="container">
         <h1>Courses</h1>
         
-        <h2>Your Courses</h2>
+        <h2>Avaliable courses</h2>
         <ul>
-            {% for course in courses %}
-                <li>{{ course.name }} - {{ course.instructor }}</li>
+            {% for course, teacher in courses %}
+            <li>
+                <strong>{{ course.name }}</strong> - Taught by: <em>{{ teacher.name }}</em>
+                {% if current_user.user_type == "student" %}
+                    {% if course.id in enrolled_courses %}
+                        <form action="{{ url_for('unenroll', course_id=course.id) }}" method="post" style="display: inline;">
+                            <button type="submit" class="red-btn">Unenroll</button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('enroll', course_id=course.id) }}" method="post" style="display: inline;">
+                            <button type="submit" class="red-btn">Enroll</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </li>
             {% endfor %}
         </ul>
 </html>

@@ -24,6 +24,19 @@
                 <li><a href="{{ url_for('about') }}">About Us</a></li>
             </ul>
         </nav>
+        
+        <!-- Flash messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    <ul class="flashes">
+                        {% for category, message in messages %}
+                            <li class="message {{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
         {% block content %}
         {% endblock %}
     </body>

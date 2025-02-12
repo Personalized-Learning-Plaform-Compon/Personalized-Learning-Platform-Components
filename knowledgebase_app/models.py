@@ -50,6 +50,20 @@ class Teachers(db.Model):
     name = db.Column(db.String(255), nullable=False)
     classes = db.Column(db.JSON, default={})
 
+class Courses(db.Model):
+    __tablename__ = 'courses'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
+
+class CourseEnrollment(db.Model):
+    __tablename__ = 'course_enrollment'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+
 class Quizzes(db.Model):
     __tablename__ = 'quizzes'
 
@@ -70,4 +84,5 @@ class Student_Progress(db.Model):
     topic = db.Column(db.String(255), nullable=False)
     time_spent = db.Column(db.Integer, nullable=False)
     attempt_date = db.Column(db.DateTime, nullable=False)
+
 

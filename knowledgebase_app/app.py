@@ -4,7 +4,7 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes, Teachers
+from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment
 
 # Load environment variables from .env file
 env_file = '.env'
@@ -164,18 +164,84 @@ def dashboard():
 
 
     # TODO: design Course model and update the query below
-    courses = [] #assuming this is where the courses from the database will go
+    # courses = [] #assuming this is where the courses from the database will go
+
+    enrolled_courses = (
+        db.session.query(Courses)
+        .join(CourseEnrollment, Courses.id == CourseEnrollment.course_id)
+        .filter(CourseEnrollment.student_id == Students.id)
+        .all()
+    )
                 
-    return render_template('dashboard.html', user=user, courses=courses)
+    return render_template('dashboard.html', user=user, courses=enrolled_courses)
 
 
 @app.route('/survey')
 def survey():
     return render_template('survey.html')
 
-@app.route('/courses')
+@app.route('/courses', methods=['GET'])
 def courses():
-    return render_template('courses.html')
+    all_courses = db.session.query(Courses, Teachers).join(Teachers, Courses.teacher_id == Teachers.id).all()
+    enrolled_courses = [enrollment.course_id for enrollment in CourseEnrollment.query.filter_by(student_id=Students.id).all()]
+    return render_template('courses.html', courses=all_courses, enrolled_courses=enrolled_courses)
+
+@app.route('/enroll/<int:course_id>', methods=['POST'])
+@login_required
+def enroll(course_id):
+    # Ensure the logged-in user is a student
+    if current_user.user_type != "student":
+        flash("Only students can enroll in courses.", "danger")
+        return redirect(url_for("courses"))
+
+    # Retrieve the student's entry based on the logged-in user's ID
+    student = Students.query.filter_by(user_id=current_user.id).first()
+    if not student:
+        flash("Student profile not found.", "danger")
+        return redirect(url_for("courses"))
+
+    # Get the student_id from the Students table
+    student_id = student.id
+
+    # Check if the student is already enrolled in the course
+    enrollment_exists = CourseEnrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+    if enrollment_exists:
+        flash("You are already enrolled in this course.", "info")
+        return redirect(url_for("courses"))
+
+    # Create a new enrollment entry
+    enrollment = CourseEnrollment(course_id=course_id, student_id=student_id)
+    db.session.add(enrollment)
+    db.session.commit()
+    flash("Successfully enrolled in the course!", "success")
+    return redirect(url_for("courses"))
+
+@app.route('/unenroll/<int:course_id>', methods=['POST'])
+@login_required
+def unenroll(course_id):
+    # Ensure the user is a student
+    if current_user.user_type != "student":
+        flash("Only students can unenroll from courses.", "danger")
+        return redirect(url_for('courses'))
+
+    # Get the student's record
+    student = Students.query.filter_by(user_id=current_user.id).first()
+    if not student:
+        flash("Student record not found.", "danger")
+        return redirect(url_for('courses'))
+
+    # Find the enrollment record
+    enrollment = CourseEnrollment.query.filter_by(course_id=course_id, student_id=student.id).first()
+    if not enrollment:
+        flash("You are not enrolled in this course.", "warning")
+        return redirect(url_for('courses'))
+
+    # Remove the enrollment record
+    db.session.delete(enrollment)
+    db.session.commit()
+    flash("Successfully unenrolled from the course.", "success")
+    return redirect(url_for('courses'))
+
 
 if __name__ == "__main__":
     with app.app_context():

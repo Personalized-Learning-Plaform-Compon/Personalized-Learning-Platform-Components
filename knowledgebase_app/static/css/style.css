@@ -2,6 +2,7 @@ h1{
     text-align: center;
 }
 
+
 .centered{
     display: flex;
     justify-content: center;
@@ -162,5 +163,9 @@ h1{
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+}
+
+.flashes {
+    list-style-type: none;
 }
   
