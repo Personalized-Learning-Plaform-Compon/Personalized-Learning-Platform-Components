@@ -1,0 +1,13 @@
+[
+    {
+        "avg_score": 67.0,
+        "student_id": 2,
+        "topic": "Math"
+    }
+]{
+    "strengths": [],
+    "student_id": 2,
+    "weaknesses": [
+        "Math"
+    ]
+}

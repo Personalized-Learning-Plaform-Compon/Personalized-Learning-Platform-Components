@@ -7,8 +7,10 @@ from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers
 
 # Load environment variables from .env file
-load_dotenv()
-
+env_file = '.env'
+if os.getenv("FLASK_ENV") == 'testing':
+    env_file = '.env.test'
+load_dotenv(env_file, override=True)
 app = Flask(__name__)
 
 # Load configuration from environment variables
