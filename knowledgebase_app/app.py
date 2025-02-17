@@ -1,10 +1,11 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request
+from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory, abort
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename, safe_join
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment
+from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
 
 # Automatically set FLASK_ENV to "development" if not explicitly set
 if os.getenv("FLASK_ENV") is None:
@@ -23,6 +24,13 @@ else:
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+ALLOWED_EXTENSIONS = {"pdf", "txt", "doc", "docx"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Initialize database and migration support
 db.init_app(app)
@@ -198,13 +206,13 @@ def enroll(course_id):
     # Ensure the logged-in user is a student
     if current_user.user_type != "student":
         flash("Only students can enroll in courses.", "danger")
-        return redirect(url_for("courses"))
+        return redirect(url_for("profile"))
 
     # Retrieve the student's entry based on the logged-in user's ID
     student = Students.query.filter_by(user_id=current_user.id).first()
     if not student:
         flash("Student profile not found.", "danger")
-        return redirect(url_for("courses"))
+        return redirect(url_for("profile"))
 
     # Get the student_id from the Students table
     student_id = student.id
@@ -228,13 +236,13 @@ def unenroll(course_id):
     # Ensure the user is a student
     if current_user.user_type != "student":
         flash("Only students can unenroll from courses.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     # Get the student's record
     student = Students.query.filter_by(user_id=current_user.id).first()
     if not student:
         flash("Student record not found.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     # Find the enrollment record
     enrollment = CourseEnrollment.query.filter_by(course_id=course_id, student_id=student.id).first()
@@ -254,13 +262,13 @@ def my_courses():
     # Ensure the user is a teacher
     if current_user.user_type != "teacher":
         flash("Only teachers can manage their courses.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     # Get the teacher's record
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
     if not teacher:
         flash("Teacher record not found.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
     
     # Handle deleting a course
     if request.method == 'POST' and 'delete_course' in request.form:
@@ -287,13 +295,13 @@ def add_course():
     # Ensure the user is a teacher
     if current_user.user_type != "teacher":
         flash("Only teachers can add courses.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     # Get the teacher's record
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
     if not teacher:
         flash("Teacher record not found.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     if request.method == 'POST':
         course_name = request.form.get('course_name')
@@ -315,13 +323,13 @@ def course_page(course_id):
     course = Courses.query.get(course_id)
     if not course:
         flash("Course not found.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     # Check if the current user is enrolled in the course
     student = Students.query.filter_by(user_id=current_user.id).first()
     if not student:
         flash("Only students can access this page.", "danger")
-        return redirect(url_for('courses'))
+        return redirect(url_for('profile'))
 
     enrollment = CourseEnrollment.query.filter_by(course_id=course.id, student_id=student.id).first()
     if not enrollment:
@@ -331,6 +339,226 @@ def course_page(course_id):
     # Pass the course to the template
     return render_template('course_page.html', course=course)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/course/<int:course_id>/upload', methods=['POST'])
+@login_required
+def upload_content(course_id):
+    if current_user.user_type != "teacher":
+        flash("Only instructors can upload files.", "danger")
+        return redirect(url_for("course_page", course_id=course_id))
+
+    if "file" not in request.files:
+        flash("No file part", "danger")
+        return redirect(url_for("course_page", course_id=course_id))
+
+    file = request.files["file"]
+    folder_id = request.form.get("folder_id")
+
+    if file.filename == "":
+        flash("No selected file", "danger")
+        return redirect(url_for("course_page", course_id=course_id))
+
+    if file and allowed_file(file.filename):
+        # If a folder is selected, get the folder name from the database
+        if folder_id:
+            folder = Folder.query.get(folder_id)
+            if folder and folder.course_id == course_id:
+                folder_name = folder.name
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, secure_filename(file.filename))
+            else:
+                flash("Invalid folder selected.", "danger")
+                return redirect(url_for("course_page", course_id=course_id))
+        else:
+            flash("No folder selected.", "danger")
+            return redirect(url_for("course_page", course_id=course_id))
+
+        # Check if the file already exists in the folder, and delete it if it does
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        # Create the folder if it doesn't exist
+        folder_path = os.path.dirname(file_path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        # Save the new file
+        file.save(file_path)
+
+        # Save the file info in the database (replace the old entry if needed)
+        content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file.filename).first()
+        if content:
+            content.file_url = file_path  # Update the file path if the file already exists
+        else:
+            # If the file does not exist in the database, create a new entry
+            content = CourseContent(
+                filename=file.filename,
+                file_url=file_path,
+                course_id=course_id,
+                folder_id=folder_id,
+                teacher_id=current_user.id
+            )
+            db.session.add(content)
+
+        db.session.commit()
+
+        flash("File uploaded and replaced successfully!", "success")
+
+    return redirect(url_for('manage_course', course_id=course_id))
+
+@app.route('/download_from_folder/<int:course_id>/<folder_name>/<filename>')
+@login_required
+def download_from_folder(course_id, folder_name, filename):
+    # Construct the file path for the file inside the folder
+    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+    file_path = os.path.join(folder_path, filename)
+
+    # Check if the file exists
+    if os.path.exists(file_path):
+        return send_from_directory(folder_path, filename, as_attachment=True)
+    else:
+        flash("File not found.", "danger")
+        return redirect(url_for('manage_course', course_id=course_id))
+
+@app.route("/create_folder", methods=["POST"])
+@login_required
+def create_folder():
+    course_id = request.form.get("course_id")
+    folder_name = request.form.get("folder_name")
+
+    # Ensure the teacher owns this course
+    course = Courses.query.get(course_id)
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+
+    if not course or course.teacher_id != teacher.id:
+        flash("You do not have permission to manage this course.", "danger")
+        return redirect(url_for("my_courses"))
+
+    # Check if folder already exists in DB
+    existing_folder = Folder.query.filter_by(name=folder_name, course_id=course_id).first()
+    if existing_folder:
+        flash("Folder already exists in this course.", "warning")
+        return redirect(url_for("manage_course", course_id=course_id))
+
+    # Save folder in DB, including teacher_id
+    new_folder = Folder(name=folder_name, course_id=course_id, teacher_id=teacher.id)
+    db.session.add(new_folder)
+    db.session.commit()
+
+    # Create folder in local storage
+    course_path = os.path.join(UPLOAD_FOLDER, f"course_{course_id}")
+    folder_path = os.path.join(course_path, folder_name)
+
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    flash("Folder created successfully!", "success")
+    return redirect(url_for("manage_course", course_id=course_id))
+
+@app.route('/folder/<int:folder_id>')
+@login_required
+def view_folder(folder_id):
+    folder = Folder.query.get_or_404(folder_id)
+    course = Courses.query.get(folder.course_id)
+
+    # Check if the user has permission to access this folder
+    if current_user.user_type == "teacher":
+        teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+        if folder.teacher_id != teacher.id:
+            flash("You do not have permission to view this folder.", "danger")
+            return redirect(url_for("my_courses"))
+
+    elif current_user.user_type == "student":
+        enrollment = CourseEnrollment.query.filter_by(student_id=current_user.id, course_id=course.id).first()
+        if not enrollment:
+            flash("You do not have access to this folder.", "danger")
+            return redirect(url_for("courses"))
+
+    return render_template("folder_page.html", folder=folder, course=course, user = current_user)
+
+@app.route('/course/<int:course_id>/manage', methods=['GET', 'POST'])
+@login_required
+def manage_course(course_id):
+    course = Courses.query.get_or_404(course_id)
+
+    # Retrieve the teacher entry linked to the current user
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+
+    if not teacher or course.teacher_id != teacher.id:
+        flash("You do not have permission to manage this course.", "danger")
+        return redirect(url_for("my_courses"))
+
+    # Fetch all folders and content related to the course
+    folders = Folder.query.filter_by(course_id=course_id).all()
+    content = CourseContent.query.filter_by(course_id=course_id, folder_id=None).all()  # Files not in folders
+
+    return render_template("manage_course.html", course=course, folders=folders, content=content)
+
+@app.route("/delete_file", methods=["POST"])
+@login_required
+def delete_file():
+    file_id = request.form.get("file_id")
+    content = CourseContent.query.get(file_id)
+
+    if not content:
+        flash("File not found.", "danger")
+        return redirect(url_for("manage_course", course_id=content.course_id))
+
+    course = Courses.query.get(content.course_id)
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+
+    if course.teacher_id != teacher.id:
+        flash("You do not have permission to delete this file.", "danger")
+        return redirect(url_for("manage_course", course_id=content.course_id))
+
+    # Remove the file from the file system
+    file_path = content.file_url
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # Remove the file from the database
+    db.session.delete(content)
+    db.session.commit()
+
+    flash("File deleted successfully!", "success")
+    return redirect(url_for("manage_course", course_id=content.course_id))
+
+@app.route("/delete_folder", methods=["POST"])
+@login_required
+def delete_folder():
+    folder_id = request.form.get("folder_id")
+    folder = Folder.query.get(folder_id)
+
+    if not folder:
+        flash("Folder not found.", "danger")
+        return redirect(url_for("manage_course", course_id=folder.course_id))
+
+    course = Courses.query.get(folder.course_id)
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+
+    if course.teacher_id != teacher.id:
+        flash("You do not have permission to delete this folder.", "danger")
+        return redirect(url_for("manage_course", course_id=folder.course_id))
+
+    # Delete all files in the folder
+    files_in_folder = CourseContent.query.filter_by(folder_id=folder_id).all()
+    for file in files_in_folder:
+        if os.path.exists(file.file_url):
+            os.remove(file.file_url)  # Delete file from the file system
+        db.session.delete(file)  # Delete file from the database
+
+    # Delete the folder itself
+    db.session.delete(folder)
+    db.session.commit()
+
+    # Remove the folder from the file system
+    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{folder.course_id}", folder.name)
+    if os.path.exists(folder_path):
+        os.rmdir(folder_path)  # Remove the empty folder
+
+    flash("Folder and its files deleted successfully!", "success")
+    return redirect(url_for("manage_course", course_id=folder.course_id))
 
 if __name__ == "__main__":
     with app.app_context():

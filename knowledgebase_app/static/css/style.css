@@ -2,6 +2,11 @@ h1{
     text-align: center;
 }
 
+ul {
+    padding: 0;
+    list-style-type: none;
+}
+
 
 .centered{
     display: flex;
@@ -170,3 +175,7 @@ h1{
     list-style-type: none;
 }
   
+.page-content{
+    padding-bottom: 3rem;
+
+}

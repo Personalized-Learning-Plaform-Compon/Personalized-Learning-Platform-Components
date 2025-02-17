@@ -85,4 +85,27 @@ class Student_Progress(db.Model):
     time_spent = db.Column(db.Integer, nullable=False)
     attempt_date = db.Column(db.DateTime, nullable=False)
 
+class Folder(db.Model):
+    __tablename__ = 'folders'
+    
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
+    course = db.relationship('Courses', backref=db.backref('folders', lazy=True))
+
+class CourseContent(db.Model):
+    __tablename__ = 'course_content'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    file_url = db.Column(db.String(512), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    folder_id = db.Column(db.Integer, db.ForeignKey('folders.id'), nullable=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
+    
+    course = db.relationship('Courses', backref=db.backref('content', lazy=True))
+    folder = db.relationship('Folder', backref=db.backref('files', lazy=True))
+
 
