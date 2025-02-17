@@ -135,12 +135,11 @@ def profile():
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    
+    student = Students.query.filter_by(user_id=user.id).first()
     # Update learning style
     form = StudentProfileForm()
     if form.validate_on_submit():
         try:
-            student = Students.query.filter_by(user_id=user_id).first()
             if student:
                 student.learning_style = form.learning_style.data
                 db.session.commit()
@@ -158,7 +157,7 @@ def profile():
     
 
     
-    return render_template('profile.html', user=user, form=form)
+    return render_template('profile.html', user=user, student=student, form=form)
 
 @app.route('/dashboard')
 @login_required

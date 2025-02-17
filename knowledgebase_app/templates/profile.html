@@ -10,6 +10,10 @@
     <p><strong>Email:</strong> {{ user.email }}</p>
     <p><strong>School:</strong> {{ user.school }}</p>
     <p><strong>User Type:</strong> {{ user.user_type }}</p>
+    <!--  Display if the user is a student -->
+    {% if user.user_type == 'student' %}
+    <p><strong>Learning Style:</strong> {{student.learning_style}}</p>
+    {% endif %}
 </div>
 
 
