@@ -35,7 +35,8 @@ login_manager.login_view = "login"
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, user_id)
+    #return User.query.get(int(user_id))
 
 @app.route('/')
 def home():
@@ -124,12 +125,12 @@ def logout():
 @login_required
 def profile():
     user_id = session.get('_user_id')
-    # print(f"{session=}")
     if user_id is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    user = User.query.get(user_id)
+    #user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if user is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
