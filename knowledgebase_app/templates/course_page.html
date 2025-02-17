@@ -1,0 +1,9 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h1>{{ course.name }}</h1>
+
+<p>Welcome to the course page for "{{ course.name }}"!</p>
+
+<a href="{{ url_for('dashboard') }}" class="blue-btn">Back to Dashboard</a>
+{% endblock %}

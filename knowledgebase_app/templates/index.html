@@ -15,7 +15,7 @@
                         <li><a href="{{ url_for('dashboard') }}">Student Dashboard</a></li>
                     {% elif current_user.user_type == "teacher" %}
                         <!-- TO DO: add teacher view dashboard-->
-                        <li><a href="{{ url_for('courses') }}">Courses</a></li>
+                        <li><a href="{{ url_for('my_courses') }}">My Courses</a></li>
                     {% endif %}
                 {% else %}
                     <li><a href="{{ url_for('login') }}">Login/Register</a></li>

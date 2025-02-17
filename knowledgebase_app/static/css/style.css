@@ -68,7 +68,7 @@ h1{
     gap: 0.2rem;
 }
 
-#email, #password, #password2, #fname, #lname, #school {
+#email, #password, #password2, #fname, #lname, #school, #course_name {
     padding: 1rem 0.5rem;
     display: inline-block;
     margin: 1rem 0;
@@ -111,9 +111,9 @@ h1{
 
 /*Button styling*/
 .blue-btn, .red-btn{
-    display: flex;
-    height: 3rem;
-    width: 5rem;
+    display: inline-flex; /* Prevents the button from taking up the full width */
+    height: auto;
+    padding: 0.5rem 1rem; /* Add padding: top/bottom and left/right */
     border-radius: 1.0rem;
     text-decoration: none;
     color: #fff;
@@ -124,6 +124,7 @@ h1{
 
 .blue-btn{
     background-color: #007bff;
+    border: 2px solid black;
 }
 
 .red-btn{
