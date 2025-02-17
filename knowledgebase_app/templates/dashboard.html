@@ -8,7 +8,7 @@
 {% if courses %}
     {% for course in courses %}
         <div class="course-container">
-            <h3>{{ course.name }}</h3>
+            <a href="{{ url_for('course_page', course_id=course.id) }}">{{ course.name }}</a>
         </div>
     {% endfor %}
 {% else %}

@@ -1,0 +1,30 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h1>Manage My Courses</h1>
+
+<!-- List of Courses Owned by the Teacher -->
+<h2>My Courses</h2>
+{% if teacher_courses %}
+<ul>
+    {% for course in teacher_courses %}
+    <li>
+        <strong>{{ course.name }}</strong>
+        <!-- Delete button -->
+        <form action="{{ url_for('my_courses') }}" method="post" style="display: inline;">
+            <input type="hidden" name="delete_course" value="{{ course.id }}">
+            <button type="submit" class="red-btn">Delete</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>You have not created any courses yet.</p>
+{% endif %}
+
+<!-- Button to Add a New Course -->
+<a href="{{ url_for('add_course') }}">
+    <button type="button" class="red-btn">Add a New Course</button>
+</a>
+
+{% endblock %}

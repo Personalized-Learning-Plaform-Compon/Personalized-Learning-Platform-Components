@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from flask_migrate import Migrate
@@ -248,6 +248,89 @@ def unenroll(course_id):
     db.session.commit()
     flash("Successfully unenrolled from the course.", "success")
     return redirect(url_for('courses'))
+
+@app.route('/my_courses', methods=['GET', 'POST'])
+@login_required
+def my_courses():
+    # Ensure the user is a teacher
+    if current_user.user_type != "teacher":
+        flash("Only teachers can manage their courses.", "danger")
+        return redirect(url_for('courses'))
+
+    # Get the teacher's record
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    if not teacher:
+        flash("Teacher record not found.", "danger")
+        return redirect(url_for('courses'))
+    
+    # Handle deleting a course
+    if request.method == 'POST' and 'delete_course' in request.form:
+        course_id = int(request.form.get('delete_course'))
+        course = Courses.query.get(course_id)
+        if course and course.teacher_id == teacher.id:
+            # Delete the course and related enrollments
+            CourseEnrollment.query.filter_by(course_id=course_id).delete()
+            db.session.delete(course)
+            db.session.commit()
+            flash("Course deleted successfully.", "success")
+        else:
+            flash("You can only delete your own courses.", "danger")
+        return redirect(url_for('my_courses'))
+
+    # Fetch all courses owned by the teacher
+    teacher_courses = Courses.query.filter_by(teacher_id=teacher.id).all()
+
+    return render_template('my_courses.html', teacher=teacher, teacher_courses=teacher_courses)
+
+@app.route('/add_course', methods=['GET', 'POST'])
+@login_required
+def add_course():
+    # Ensure the user is a teacher
+    if current_user.user_type != "teacher":
+        flash("Only teachers can add courses.", "danger")
+        return redirect(url_for('courses'))
+
+    # Get the teacher's record
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    if not teacher:
+        flash("Teacher record not found.", "danger")
+        return redirect(url_for('courses'))
+
+    if request.method == 'POST':
+        course_name = request.form.get('course_name')
+        if not course_name:
+            flash("Course name cannot be empty.", "danger")
+        else:
+            new_course = Courses(name=course_name, teacher_id=teacher.id)
+            db.session.add(new_course)
+            db.session.commit()
+            flash("Course added successfully.", "success")
+            return redirect(url_for('my_courses'))
+
+    return render_template('add_course.html')
+
+@app.route('/course/<int:course_id>', methods=['GET'])
+@login_required
+def course_page(course_id):
+    # Query the course by ID
+    course = Courses.query.get(course_id)
+    if not course:
+        flash("Course not found.", "danger")
+        return redirect(url_for('courses'))
+
+    # Check if the current user is enrolled in the course
+    student = Students.query.filter_by(user_id=current_user.id).first()
+    if not student:
+        flash("Only students can access this page.", "danger")
+        return redirect(url_for('courses'))
+
+    enrollment = CourseEnrollment.query.filter_by(course_id=course.id, student_id=student.id).first()
+    if not enrollment:
+        flash("You are not enrolled in this course.", "danger")
+        return redirect(url_for('courses'))
+
+    # Pass the course to the template
+    return render_template('course_page.html', course=course)
 
 
 if __name__ == "__main__":
