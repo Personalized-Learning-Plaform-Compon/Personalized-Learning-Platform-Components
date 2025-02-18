@@ -146,7 +146,9 @@ def profile():
     
     student = Students.query.filter_by(user_id=user.id).first()
     learning_methods = None
-    formatted_text = session.get('formatted_text', None)
+    formatted_learning_methods = None
+    if student:
+        formatted_learning_methods = session.get('formatted_text', None)
     # Update learning style
     form = StudentProfileForm()
     if form.validate_on_submit():
@@ -162,8 +164,8 @@ def profile():
                     temperature=0.3
                 )
                 learning_methods = response.choices[0].message.content
-                formatted_text = format_learning_methods(learning_methods)
-                session['formatted_text'] = formatted_text
+                formatted_learning_methods = format_learning_methods(learning_methods)
+                session['formatted_learning_methods'] = formatted_learning_methods
                 flash('Learning style updated successfully.', 'success')
             else:
                 flash('Student not found.', 'danger')
@@ -175,7 +177,7 @@ def profile():
     else:
         print(form.errors)  # Debugging: Print form errors to the console
     
-    return render_template('profile.html', user=user, student=student, form=form, formatted_text=formatted_text)
+    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
 
 def format_learning_methods(text):
     # Split text into individual points based on numbering

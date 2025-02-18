@@ -29,10 +29,10 @@
 </form>
 {% endif %}
 
-{% if formatted_text %}
+{% if formatted_learning_methods %}
 <div class="learning-methods">
     <h2>Recommended {{student.learning_style}} Learning Methods</h2>
-    <p>{{ formatted_text | safe}}</p>
+    <p>{{ formatted_learning_methods | safe}}</p>
 </div>
 {% endif %}
 
