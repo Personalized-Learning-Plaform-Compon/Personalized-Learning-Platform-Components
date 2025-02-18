@@ -148,7 +148,7 @@ def profile():
     learning_methods = None
     formatted_learning_methods = None
     if student:
-        formatted_learning_methods = session.get('formatted_text', None)
+        formatted_learning_methods = session.get('formatted_learning_methods', None)
     # Update learning style
     form = StudentProfileForm()
     if form.validate_on_submit():
