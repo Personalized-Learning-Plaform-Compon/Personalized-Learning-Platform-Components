@@ -1,6 +1,6 @@
 import os
 import re
-from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request
+from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename, safe_join
@@ -503,7 +503,8 @@ def view_folder(folder_id):
             return redirect(url_for("my_courses"))
 
     elif current_user.user_type == "student":
-        enrollment = CourseEnrollment.query.filter_by(student_id=current_user.id, course_id=course.id).first()
+        student = Students.query.filter_by(user_id=current_user.id).first()
+        enrollment = CourseEnrollment.query.filter_by(student_id=student.id, course_id=course.id).first()
         if not enrollment:
             flash("You do not have access to this folder.", "danger")
             return redirect(url_for("courses"))
