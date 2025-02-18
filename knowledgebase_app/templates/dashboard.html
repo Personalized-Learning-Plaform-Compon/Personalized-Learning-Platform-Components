@@ -4,16 +4,17 @@
 <title>Student Dashboard</title>
 <h1>Welcome, {{ user.fname }} {{ user.lname }}!</h1>
 
-<h2>Your Enrolled Courses</h2>
-{% if courses %}
-    {% for course in courses %}
-        <div class="course-container">
-            <a href="{{ url_for('course_page', course_id=course.id) }}">{{ course.name }}</a>
-        </div>
-    {% endfor %}
-{% else %}
-    <p>You are not enrolled in any courses yet.</p>
-{% endif %}
-
+<div class = "page-content">
+    <h2>Your Enrolled Courses</h2>
+    {% if courses %}
+        {% for course in courses %}
+            <div class="course-container">
+                <a href="{{ url_for('course_page', course_id=course.id) }}">{{ course.name }}</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>You are not enrolled in any courses yet.</p>
+    {% endif %}
+</div>
 <a href="{{ url_for('courses') }}" class="red-btn">Add course</a>
 {% endblock %}
