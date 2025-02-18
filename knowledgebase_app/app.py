@@ -13,7 +13,7 @@ if os.getenv("FLASK_ENV") is None:
 
 # Load environment variables from .env file
 app = Flask(__name__)
-env_file = '..\\.env'
+env_file = os.path.join('..', '.env')
 load_dotenv(env_file, override=True)
 
 if os.getenv("FLASK_ENV") == 'testing':
@@ -172,21 +172,19 @@ def profile():
 def dashboard():
     user = current_user
     student = Students.query.filter_by(user_id=user.id).first()
+
     if not student:
         flash('Student not found. Please try again.', 'danger')
         return redirect(url_for('profile'))
 
-
-    # TODO: design Course model and update the query below
-    # courses = [] #assuming this is where the courses from the database will go
-
+    # Retrieve only courses where the student is actually enrolled
     enrolled_courses = (
         db.session.query(Courses)
         .join(CourseEnrollment, Courses.id == CourseEnrollment.course_id)
-        .filter(CourseEnrollment.student_id == Students.id)
+        .filter(CourseEnrollment.student_id == student.id)  # Fix: Use student.id
         .all()
     )
-                
+
     return render_template('dashboard.html', user=user, courses=enrolled_courses)
 
 
@@ -195,10 +193,22 @@ def survey():
     return render_template('survey.html')
 
 @app.route('/courses', methods=['GET'])
+@login_required
 def courses():
     all_courses = db.session.query(Courses, Teachers).join(Teachers, Courses.teacher_id == Teachers.id).all()
-    enrolled_courses = [enrollment.course_id for enrollment in CourseEnrollment.query.filter_by(student_id=Students.id).all()]
+
+    # Get the current student instance
+    student = Students.query.filter_by(user_id=current_user.id).first()
+
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Get list of enrolled course IDs for the current student
+    enrolled_courses = [enrollment.course_id for enrollment in CourseEnrollment.query.filter_by(student_id=student.id).all()]
+
     return render_template('courses.html', courses=all_courses, enrolled_courses=enrolled_courses)
+
 
 @app.route('/enroll/<int:course_id>', methods=['POST'])
 @login_required
