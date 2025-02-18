@@ -1,8 +1,10 @@
 import os
+import re
 from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+import openai
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment
 
@@ -14,7 +16,7 @@ if os.getenv("FLASK_ENV") is None:
 app = Flask(__name__)
 env_file = '..\\.env'
 load_dotenv(env_file, override=True)
-
+openai.api_key = os.getenv("OPENAI_API_KEY")
 if os.getenv("FLASK_ENV") == 'testing':
     env_file = '.env.test'
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"  # Use an in-memory test DB
@@ -27,7 +29,7 @@ else:
 # Initialize database and migration support
 db.init_app(app)
 migrate = Migrate(app, db)
-
+openai_client = openai.OpenAI()
 # Flask-Login setup
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -36,7 +38,6 @@ login_manager.login_view = "login"
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, user_id)
-    #return User.query.get(int(user_id))
 
 @app.route('/')
 def home():
@@ -136,6 +137,8 @@ def profile():
         return redirect(url_for('login'))
     
     student = Students.query.filter_by(user_id=user.id).first()
+    learning_methods = None
+    formatted_text = session.get('formatted_text', None)
     # Update learning style
     form = StudentProfileForm()
     if form.validate_on_submit():
@@ -143,6 +146,16 @@ def profile():
             if student:
                 student.learning_style = form.learning_style.data
                 db.session.commit()
+                prompt = f"Generate ways to learn based on the {student.learning_style} learning style. (brief)"
+                response = openai_client.chat.completions.create(
+                    model='gpt-4o-mini',
+                    messages=[{"role": "system", "content": prompt}],
+                    max_tokens=500,
+                    temperature=0.3
+                )
+                learning_methods = response.choices[0].message.content
+                formatted_text = format_learning_methods(learning_methods)
+                session['formatted_text'] = formatted_text
                 flash('Learning style updated successfully.', 'success')
             else:
                 flash('Student not found.', 'danger')
@@ -153,12 +166,20 @@ def profile():
         return redirect(url_for('profile'))
     else:
         print(form.errors)  # Debugging: Print form errors to the console
-
     
+    return render_template('profile.html', user=user, student=student, form=form, formatted_text=formatted_text)
 
+def format_learning_methods(text):
+    # Split text into individual points based on numbering
+    items = re.split(r'\d+\.\s\*\*(.*?)\*\*:\s', text)[1:]  # Extract headers & descriptions
     
-    return render_template('profile.html', user=user, student=student, form=form)
-
+    formatted_list = []
+    for i in range(0, len(items), 2):  # Process in pairs (title, description)
+        title = items[i].strip()
+        description = items[i + 1].strip()
+        formatted_list.append(f"<li><strong>{title}</strong>: {description}</li>")
+    
+    return "<ul>" + "".join(formatted_list) + "</ul>"
 @app.route('/dashboard')
 @login_required
 def dashboard():

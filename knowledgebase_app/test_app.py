@@ -1,7 +1,9 @@
 import os
+from unittest.mock import MagicMock, patch
 
 # Set the environment variable for testing BEFORE importing app.py
 os.environ["FLASK_ENV"] = "testing"
+os.environ["OPENAI_API_KEY"] = "testing"
 
 import pytest, pprint
 from app import app, Student_Progress, Quizzes
@@ -18,6 +20,7 @@ def client():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"  # Use an in-memory test DB
     app.config["SECRET_KEY"] = "testing"  # Set a secret key for the session
     app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF protection in tests
+    app.config["OPENAI_API_KEY"] = "testing"  
     with app.test_client() as client:
         with app.app_context():
             db.create_all()  # Create test tables
@@ -183,17 +186,23 @@ def test_update_learning_style(client):
 
     # Define new learning style data to update
     new_learning_style = "Visual"
-    
-    # Post new learning style via the update form.
-    response = client.post('/profile', data={
-        'learning_style': new_learning_style
-    }, follow_redirects=True)
-    
-    # Check for the success flash message in the response
-    assert response.status_code == 200
-    assert b'Learning style updated successfully.' in response.data
 
-    # Verify that the student's record was updated in the database
-    updated_student = db.session.get(Students, user_id)
-    assert updated_student is not None
-    assert updated_student.learning_style == new_learning_style
+    # Mock the OpenAI API call
+    with patch('app.openai_client') as mock_openai_client:
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="Mocked learning methods"))]
+        mock_openai_client.chat.completions.create.return_value = mock_response  # Mock the create method
+        # Post new learning style via the update form (endpoint assumed to be '/profile')
+        response = client.post('/profile', data={
+            'learning_style': new_learning_style
+        }, follow_redirects=True)
+    
+        # Check for the success flash message in the response
+        assert response.status_code == 200
+        assert b'Learning style updated successfully.' in response.data
+
+        # Verify that the student's record was updated in the database
+        updated_student = db.session.get(Students, user_id)
+        assert updated_student is not None
+        assert b'Recommended Visual Learning Methods' in response.data
+        assert updated_student.learning_style == new_learning_style
