@@ -162,7 +162,7 @@ def test_update_learning_style(client):
         lname='Test',
         school='Test School',
         user_type='student',
-        password=generate_password_hash('password')
+        password=generate_password_hash('password', method='pbkdf2:sha256')
     )
     with app.app_context():
         db.session.add(user)
