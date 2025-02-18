@@ -37,14 +37,21 @@ def test_get_progress(client):
     date2 = datetime.strptime("2022-01-01 12:30:00", "%Y-%m-%d %H:%M:%S")
     with app.app_context():
         quiz_entry = Quizzes(quiz_id = 1, topic="Math", difficulty="Easy", format="MCQ", content="What is 1+1?", tags=list({"addition", "math"}))
-        progress_entry = Student_Progress(student_id=1, quiz_id = 1, topic="Math", score=85.0, time_spent = 9, attempt_date = date1)
-        progress_entry2 = Student_Progress(student_id=2, quiz_id = 1, topic="Math", score=100.0, time_spent = 9, attempt_date = date2)
-        progress_entry3 = Student_Progress(student_id=2, quiz_id = 1, topic="Math", score=34.0, time_spent = 9, attempt_date = date2)
-
-        db.session.add(quiz_entry) 
+        quiz_entry2 = Quizzes(quiz_id = 2, topic="Science", difficulty="Hard", format="MCQ", content="What is 1+1?", tags=list({"addition", "math"}))
+        progress_entry = Student_Progress(student_id=1, quiz_id = 1, topic="Math", score=85.0, time_spent = 9, attempt_date = "2022-01-01 12:00:00")
+        progress_entry2 = Student_Progress(student_id=2, quiz_id = 1, topic="Math", score=100.0, time_spent = 9, attempt_date = "2022-01-01 12:30:00")
+        progress_entry3 = Student_Progress(student_id=2, quiz_id = 1, topic="Math", score=34.0, time_spent = 9, attempt_date = "2022-01-01 12:30:00")
+        progress_entry4 = Student_Progress(student_id=1, quiz_id = 2, topic="Science", score=83.0, time_spent = 9, attempt_date = "2022-01-01 12:00:00")
+        progress_entry5 = Student_Progress(student_id=2, quiz_id = 2, topic="Science", score=29.0, time_spent = 9, attempt_date = "2022-01-01 12:30:00")
+        progress_entry6 = Student_Progress(student_id=1, quiz_id = 1, topic="Math", score=37.0, time_spent = 9, attempt_date = "2022-01-01 12:30:00")
+        db.session.add(quiz_entry)
+        db.session.add(quiz_entry2)
         db.session.add(progress_entry)        
         db.session.add(progress_entry2)
         db.session.add(progress_entry3)
+        db.session.add(progress_entry4)
+        db.session.add(progress_entry5)
+        db.session.add(progress_entry6)
 
         db.session.commit()
         
@@ -52,10 +59,14 @@ def test_get_progress(client):
     # Make request
     response = client.get("/progress/2")
     response2 = client.get("/strengths/weakness/2")
+    response3 = client.get("/progress/1")  
+    response4 = client.get("/strengths/weakness/1") 
     # Check response
     assert response.status_code == 200
     data = response.get_json()
     data2 = response2.get_json()
+    data3 = response3.get_json()
+    data4 = response4.get_json()
     with open("test_output.json", "w") as f:
         import json
         json.dump(data, f, indent=4) 
@@ -205,3 +216,9 @@ def test_get_progress(client):
 #     updated_student = db.session.get(Students, user_id)
 #     assert updated_student is not None
 #     assert updated_student.learning_style == new_learning_style
+        # json.dump(data3, f, indent=4)
+        # json.dump(data4, f, indent=4)
+    # print(data)
+    # assert isinstance(data, list)
+    # assert data[0]["topic"] == "Math"
+    # assert data[0]["avg_score"] == 85.0

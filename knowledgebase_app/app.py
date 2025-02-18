@@ -597,10 +597,6 @@ def delete_folder():
     flash("Folder and its files deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=folder.course_id))
 
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
 
 def generate_quiz(topic_text, num_questions=5):
     """Generate quiz questions from a given topic text using Huggingface API."""
@@ -679,7 +675,11 @@ def recommend_content(student_id):
         .limit(5)
         .all()
     )
-
     return {"weak_areas": weak_recommendations, "strong_areas": strong_recommendations}
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
 
 
