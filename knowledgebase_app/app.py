@@ -388,6 +388,7 @@ def upload_content(course_id):
 
     file = request.files["file"]
     folder_id = request.form.get("folder_id")
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
 
     if file.filename == "":
         flash("No selected file", "danger")
@@ -430,7 +431,7 @@ def upload_content(course_id):
                 file_url=file_path,
                 course_id=course_id,
                 folder_id=folder_id,
-                teacher_id=current_user.id
+                teacher_id=teacher.id
             )
             db.session.add(content)
 
