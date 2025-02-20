@@ -83,6 +83,7 @@ class Student_Progress(db.Model):
     score = db.Column(db.Numeric(5, 2), nullable=False)
     topic = db.Column(db.String(255), nullable=False)
     time_spent = db.Column(db.Integer, nullable=False)
+    action = db.Column(db.String(255)) #complete, review, start
     attempt_date = db.Column(db.DateTime, nullable=False)
 
 class Folder(db.Model):

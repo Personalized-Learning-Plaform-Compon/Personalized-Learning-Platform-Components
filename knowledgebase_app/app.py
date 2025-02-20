@@ -627,7 +627,7 @@ def generate_quiz_endpoint():
     quiz_questions = generate_quiz(topic_text, num_questions)
     
     return jsonify({"quiz_questions": quiz_questions})
-
+    
 @app.route('/progress/<int:student_id>')
 def get_progress(student_id):
     # Query to calculate the average score for each topic for the given student
@@ -638,9 +638,10 @@ def get_progress(student_id):
         .all()
     )
     # Format the result as a list of dictionaries
-    progress = [{'student_id': student_id, 'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
+    progress = [{'progress': "progress", 'student_id': student_id, 'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
 
     return jsonify(progress)
+
 @app.route('/strengths/weakness/<int:student_id>')
 def analyze_strengths_weaknesses(student_id):
     results = (
@@ -649,12 +650,12 @@ def analyze_strengths_weaknesses(student_id):
         .group_by(Student_Progress.topic)
         .all()
     )
-
     strengths = [topic for topic, avg_score in results if avg_score >= 75]
     weaknesses = [topic for topic, avg_score in results if avg_score < 75]
 
-    return {"student_id": student_id, "strengths": strengths, "weaknesses": weaknesses}
+    return {"strengths/weaknesses": "strengths/weaknesses", "student_id": student_id, "strengths": strengths, "weaknesses": weaknesses}
 
+@app.route('/recommendations/<int:student_id>')
 def recommend_content(student_id):
     analysis = analyze_strengths_weaknesses(student_id)
     strengths = analysis['strengths']
@@ -662,7 +663,7 @@ def recommend_content(student_id):
 
     # Recommend for weaknesses
     weak_recommendations = (
-        db.session.query(Quizzes.id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
+        db.session.query(Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
         .filter(Quizzes.topic.in_(weaknesses), Quizzes.difficulty == 'Easy')
         .limit(5)
         .all()
@@ -670,12 +671,41 @@ def recommend_content(student_id):
 
     # Recommend for strengths
     strong_recommendations = (
-        db.session.query(Quizzes.id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
+        db.session.query(Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
         .filter(Quizzes.topic.in_(strengths), Quizzes.difficulty == 'Hard')
         .limit(5)
         .all()
     )
-    return {"weak_areas": weak_recommendations, "strong_areas": strong_recommendations}
+    return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": student_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
+
+@app.route('/balanced_recommendations/<int:student_id>')
+def balanced_recommendations(student_id):
+    weak_recommendations = db.session.query(
+       Student_Progress.quiz_id, Student_Progress.topic, Student_Progress.time_spent
+
+    ).filter(
+        Student_Progress.student_id == student_id,
+        Student_Progress.time_spent < 90,  # High engagement
+        Student_Progress.action == 'complete'
+    ).limit(2).all()
+    # Fetch strengths based on high completion & long time spent
+    strong_recommendations = db.session.query(
+         Student_Progress.quiz_id, Student_Progress.topic, Student_Progress.time_spent
+    ).filter(
+        Student_Progress.student_id == student_id,
+        Student_Progress.time_spent > 180,  # High engagement
+        Student_Progress.action == 'complete', 
+    ).limit(2).all()
+
+    weak_quizzes = [{"topic":x.topic, "quiz_id": x.quiz_id, "time_spent": x.time_spent} for x in weak_recommendations]
+    strong_quizzes = [{"topic":r.topic, "quiz_id": r.quiz_id, "time_spent": r.time_spent} for r in strong_recommendations]
+    return jsonify({
+        "balanced_recommendations": "balanced reommendations",
+        "student": student_id,
+        "reinforcement quizzes": weak_quizzes,
+        "advanced_engagement quizzes": strong_quizzes
+    })
+
 
 if __name__ == "__main__":
     with app.app_context():
