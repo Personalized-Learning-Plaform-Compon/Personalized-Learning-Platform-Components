@@ -17,4 +17,77 @@
     {% endif %}
 </div>
 <a href="{{ url_for('courses') }}" class="red-btn">Add course</a>
+
+
+<div class="container">
+    <h2>Student Dashboard</h2>
+    
+    <div class="courses">
+        {% for course in courses %}
+        <div class="course-card">
+            <h3>{{ course.name }}</h3>
+            <div class="progress-section" id="milestone-container-{{ course.id }}">
+                <div class="progress-bar">
+                    <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
+                </div>
+                <p><strong>Completed:</strong> <span id="completed-quizzes-{{ course.id }}">0</span> / 
+                <span id="total-quizzes-{{ course.id }}">0</span></p>
+                <p><strong>Progress:</strong> <span id="progress-percentage-{{ course.id }}">0%</span></p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    {% for course in courses %}
+    fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
+            document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
+            document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
+
+            // Adjust progress bar width
+            document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
+        })
+        .catch(error => console.error("Error fetching milestone data:", error));
+    {% endfor %}
+});
+</script>
+
+<style>
+.courses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.course-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f9f9f9;
+    width: 300px;
+    text-align: center;
+}
+.progress-section {
+    margin-top: 10px;
+    padding: 10px;
+}
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: #4CAF50;
+    width: 0%;
+    transition: width 0.5s ease-in-out;
+}
+</style>
+
 {% endblock %}

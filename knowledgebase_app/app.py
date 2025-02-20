@@ -642,6 +642,34 @@ def get_progress(student_id):
 
     return jsonify(progress)
 
+@app.route('/milestones/<int:student_id>/<int:course_id>')
+@login_required
+def get_course_milestones(student_id, course_id):
+    # Fetch total quizzes in the course
+    total_quizzes = db.session.query(Quizzes).filter(
+        Quizzes.course_id == course_id
+    ).count()
+
+    # Fetch completed quizzes in the course
+    completed_quizzes = db.session.query(Student_Progress).join(Quizzes).filter(
+        Student_Progress.student_id == student_id,
+        Student_Progress.action == 'complete',
+        Quizzes.course_id == course_id
+    ).count()
+
+    # Calculate completion percentage
+    completion_percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
+
+    return jsonify({
+        "student_id": student_id,
+        "course_id": course_id,
+        "completed_quizzes": completed_quizzes,
+        "total_quizzes": total_quizzes,
+        "completion_percentage": round(completion_percentage, 2)
+    })
+
+
+
 @app.route('/strengths/weakness/<int:student_id>')
 def analyze_strengths_weaknesses(student_id):
     results = (

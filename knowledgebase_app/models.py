@@ -66,14 +66,14 @@ class CourseEnrollment(db.Model):
 
 class Quizzes(db.Model):
     __tablename__ = 'quizzes'
-
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     quiz_id = db.Column(db.Integer, primary_key=True, nullable=False)
     topic = db.Column(db.String(255), nullable=False)
     difficulty = db.Column(db.Enum('Easy', 'Medium', 'Hard', name="difficulty_enum"), nullable=False)
     format = db.Column(db.Enum('MCQ', 'Essay', 'True/False', 'Fill-in-the-blank', name="quiz_format_enum"), nullable=False)
     content = db.Column(db.Text, nullable=False)
     tags = db.Column(db.JSON, default={})
-
+    
 class Student_Progress(db.Model):
     __tablename__ = 'student_progress'
 
