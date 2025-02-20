@@ -439,7 +439,7 @@ def upload_content(course_id):
             db.session.add(content)
         db.session.commit()
 
-        flash("File uploaded and replaced successfully!", "success")
+        flash("File uploadeded successfully!", "success")
 
     return redirect(url_for('manage_course', course_id=course_id))
 
@@ -455,7 +455,7 @@ def download_from_folder(course_id, folder_name, filename):
         return send_from_directory(folder_path, filename, as_attachment=True)
     else:
         flash("File not found.", "danger")
-        return redirect(url_for('manage_course', course_id=course_id))
+        return redirect(url_for('profile'))
 
 @app.route("/create_folder", methods=["POST"])
 @login_required
