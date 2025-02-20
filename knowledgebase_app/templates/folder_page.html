@@ -4,7 +4,7 @@
 <h1>{{ folder.name }}</h1>
 
 <div class="page-content">
-    <h2>Files</h2>
+    <h2>Content</h2>
     {% for file in folder.files %}
         <div>
             <a href="{{ url_for('download_from_folder', course_id=course.id, folder_name=folder.name, filename=file.filename) }}">{{ file.filename }}</a>

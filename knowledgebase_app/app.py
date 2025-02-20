@@ -389,6 +389,8 @@ def upload_content(course_id):
     file = request.files["file"]
     folder_id = request.form.get("folder_id")
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    content_types = ','.join(request.form.getlist('category'))
+    #breakpoint()
 
     if file.filename == "":
         flash("No selected file", "danger")
@@ -422,8 +424,11 @@ def upload_content(course_id):
 
         # Save the file info in the database (replace the old entry if needed)
         content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file.filename).first()
+        # Update content types if needed
+        #breakpoint()
         if content:
             content.file_url = file_path  # Update the file path if the file already exists
+            content.category = content_types
         else:
             # If the file does not exist in the database, create a new entry
             content = CourseContent(
@@ -431,10 +436,10 @@ def upload_content(course_id):
                 file_url=file_path,
                 course_id=course_id,
                 folder_id=folder_id,
-                teacher_id=teacher.id
+                teacher_id=teacher.id,
+                category=content_types
             )
             db.session.add(content)
-
         db.session.commit()
 
         flash("File uploaded and replaced successfully!", "success")
