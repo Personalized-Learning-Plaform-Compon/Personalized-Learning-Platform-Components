@@ -5,7 +5,8 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename, safe_join
 from flask_migrate import Migrate
-import openai
+import requests 
+import openai 
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
 
