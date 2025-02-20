@@ -1,13 +1,81 @@
 [
     {
         "avg_score": 67.0,
+        "progress": "progress",
         "student_id": 2,
         "topic": "Math"
+    },
+    {
+        "avg_score": 29.0,
+        "progress": "progress",
+        "student_id": 2,
+        "topic": "Science"
     }
 ]{
     "strengths": [],
+    "strengths/weaknesses": "strengths/weaknesses",
     "student_id": 2,
+    "weaknesses": [
+        "Math",
+        "Science"
+    ]
+}[
+    {
+        "avg_score": 61.0,
+        "progress": "progress",
+        "student_id": 1,
+        "topic": "Math"
+    },
+    {
+        "avg_score": 83.0,
+        "progress": "progress",
+        "student_id": 1,
+        "topic": "Science"
+    }
+]{
+    "strengths": [
+        "Science"
+    ],
+    "strengths/weaknesses": "strengths/weaknesses",
+    "student_id": 1,
     "weaknesses": [
         "Math"
     ]
+}{
+    "recommendations": "recommendations",
+    "strong_areas_quizzes": [
+        2
+    ],
+    "strong_topics": [
+        "Science"
+    ],
+    "student": 1,
+    "weak_areas_quizzes": [
+        1
+    ],
+    "weak_topics": [
+        "Math"
+    ]
+}{
+    "advanced_engagement quizzes": [
+        {
+            "quiz_id": 2,
+            "time_spent": 181,
+            "topic": "Science"
+        }
+    ],
+    "balanced_recommendations": "balanced reommendations",
+    "reinforcement quizzes": [
+        {
+            "quiz_id": 1,
+            "time_spent": 9,
+            "topic": "Math"
+        },
+        {
+            "quiz_id": 1,
+            "time_spent": 89,
+            "topic": "Math"
+        }
+    ],
+    "student": 1
 }
