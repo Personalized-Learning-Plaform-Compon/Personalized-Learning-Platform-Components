@@ -8,7 +8,7 @@ os.environ["FLASK_ENV"] = "testing"
 os.environ["OPENAI_API_KEY"] = "testing"
 
 import pytest, pprint
-from app import app, Student_Progress, Quizzes
+from app import app, Student_Progress, Quizzes, Courses
 from sqlalchemy import text
 from models import db
 from models import Students, User
@@ -38,14 +38,16 @@ def test_get_progress(client):
     date1 = datetime.strptime("2022-01-01 12:00:00", "%Y-%m-%d %H:%M:%S")
     date2 = datetime.strptime("2022-01-01 12:30:00", "%Y-%m-%d %H:%M:%S")
     with app.app_context():
-        quiz_entry = Quizzes(quiz_id = 1, topic="Math", difficulty="Easy", format="MCQ", content="What is 1+1?", tags=list({"addition", "math"}))
-        quiz_entry2 = Quizzes(quiz_id = 2, topic="Science", difficulty="Hard", format="MCQ", content="What is 1+1?", tags=list({"addition", "math"}))
+        quiz_entry = Quizzes(quiz_id = 1, courses_id=1, topic="Math", difficulty="Easy", format="MCQ", content="What is 1+1?", tags=list({"addition", "math"}))
+        quiz_entry2 = Quizzes(quiz_id = 2, courses_id=2, topic="Science", difficulty="Hard", format="MCQ", content="What is 1+1?", tags=list({"addition", "math"}))
         progress_entry = Student_Progress(student_id=1, quiz_id = 1, topic="Math", score=85.0, time_spent = 9, action="complete", attempt_date = date1)
         progress_entry2 = Student_Progress(student_id=2, quiz_id = 1, topic="Math", score=100.0, time_spent = 9, action="complete", attempt_date = date1)
         progress_entry3 = Student_Progress(student_id=2, quiz_id = 1, topic="Math", score=34.0, time_spent = 9, action="complete", attempt_date = date1)
         progress_entry4 = Student_Progress(student_id=1, quiz_id = 2, topic="Science", score=83.0, time_spent = 181, action="complete", attempt_date = date1)
         progress_entry5 = Student_Progress(student_id=2, quiz_id = 2, topic="Science", score=29.0, time_spent = 9, action="complete", attempt_date = date1)
         progress_entry6 = Student_Progress(student_id=1, quiz_id = 1, topic="Math", score=37.0, time_spent = 89, action="complete", attempt_date = date1)
+        progress_entry7 = Courses(id=1, name="Math", teacher_id=1)
+        
         db.session.add(quiz_entry)
         db.session.add(quiz_entry2)
         db.session.add(progress_entry)        
@@ -54,6 +56,7 @@ def test_get_progress(client):
         db.session.add(progress_entry4)
         db.session.add(progress_entry5)
         db.session.add(progress_entry6)
+        db.session.add(progress_entry7) 
         db.session.commit()
         
 
@@ -64,6 +67,7 @@ def test_get_progress(client):
     response4 = client.get("/strengths/weakness/1") 
     response5 = client.get("/recommendations/1")   
     response6 = client.get("/balanced_recommendations/1")
+    response7 = client.get("/milestones/1/1")
 
     # Check response
     assert response.status_code == 200
@@ -73,6 +77,7 @@ def test_get_progress(client):
     data4 = response4.get_json()
     data5 = response5.get_json()
     data6 = response6.get_json()
+    data7 = response7.get_json()
     
     with open("test_output.json", "w") as f:
         import json
@@ -82,6 +87,7 @@ def test_get_progress(client):
         json.dump(data4, f, indent=4)
         json.dump(data5, f, indent=4)
         json.dump(data6, f, indent=4)   
+        json.dump(data7, f, indent=4)
         
     
 

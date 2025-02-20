@@ -647,14 +647,14 @@ def get_progress(student_id):
 def get_course_milestones(student_id, course_id):
     # Fetch total quizzes in the course
     total_quizzes = db.session.query(Quizzes).filter(
-        Quizzes.course_id == course_id
+        Quizzes.courses_id == course_id
     ).count()
 
     # Fetch completed quizzes in the course
     completed_quizzes = db.session.query(Student_Progress).join(Quizzes).filter(
         Student_Progress.student_id == student_id,
         Student_Progress.action == 'complete',
-        Quizzes.course_id == course_id
+        Quizzes.courses_id == course_id
     ).count()
 
     # Calculate completion percentage
