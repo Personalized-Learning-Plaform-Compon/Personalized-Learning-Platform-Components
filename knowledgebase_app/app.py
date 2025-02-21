@@ -497,6 +497,7 @@ def create_folder():
 def view_folder(folder_id):
     folder = Folder.query.get_or_404(folder_id)
     course = Courses.query.get(folder.course_id)
+    content = course.content
 
     # Check if the user has permission to access this folder
     if current_user.user_type == "teacher":
@@ -512,7 +513,7 @@ def view_folder(folder_id):
             flash("You do not have access to this folder.", "danger")
             return redirect(url_for("courses"))
 
-    return render_template("folder_page.html", folder=folder, course=course, user = current_user)
+    return render_template("folder_page.html", folder=folder, course=course, user = current_user, content=content)
 
 @app.route('/course/<int:course_id>/manage', methods=['GET', 'POST'])
 @login_required
