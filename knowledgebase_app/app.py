@@ -455,8 +455,8 @@ def download_from_folder(course_id, folder_name, filename, file_extension):
     # Construct the file path for the file inside the folder
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
 
-    # Add extension to filename for download
-    filename = filename + '.' + file_extension
+    # Adjust filename and append extension
+    filename = (filename + '.' + file_extension).replace(' ', '_')
 
     file_path = os.path.join(folder_path, filename)
 
