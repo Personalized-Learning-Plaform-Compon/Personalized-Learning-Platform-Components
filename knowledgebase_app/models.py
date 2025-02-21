@@ -107,7 +107,10 @@ class CourseContent(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
     category = db.Column(db.String(255), nullable=True)
     
+    
     course = db.relationship('Courses', backref=db.backref('content', lazy=True))
     folder = db.relationship('Folder', backref=db.backref('files', lazy=True))
+
+    file_extension = db.Column(db.String(255), nullable=True)
 
 

@@ -391,21 +391,22 @@ def upload_content(course_id):
     folder_id = request.form.get("folder_id")
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
     content_types = ','.join(request.form.getlist('category'))
+    file_extension = file.filename.rsplit('.', 1)[1].lower()
 
     if file.filename == "":
         flash("No selected file", "danger")
         return redirect(url_for("course_page", course_id=course_id))
 
     if file and allowed_file(file.filename):
-        # Add original file extension to new file name entered in form
-        file_name = secure_filename(file_name + '.' + file.filename.rsplit('.', 1)[1].lower())
 
         # If a folder is selected, get the folder name from the database
         if folder_id:
             folder = Folder.query.get(folder_id)
             if folder and folder.course_id == course_id:
                 folder_name = folder.name
-                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, file_name)
+
+                # Add file path with new file name + original file extension
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, secure_filename(file_name + '.' + file_extension))
             else:
                 flash("Invalid folder selected.", "danger")
                 return redirect(url_for("course_page", course_id=course_id))
@@ -438,7 +439,8 @@ def upload_content(course_id):
                 course_id=course_id,
                 folder_id=folder_id,
                 teacher_id=teacher.id,
-                category=content_types
+                category=content_types,
+                file_extension=file_extension
             )
             db.session.add(content)
         db.session.commit()
@@ -447,11 +449,15 @@ def upload_content(course_id):
 
     return redirect(url_for('manage_course', course_id=course_id))
 
-@app.route('/download_from_folder/<int:course_id>/<folder_name>/<filename>')
+@app.route('/download_from_folder/<int:course_id>/<folder_name>/<filename>/<file_extension>')
 @login_required
-def download_from_folder(course_id, folder_name, filename):
+def download_from_folder(course_id, folder_name, filename, file_extension):
     # Construct the file path for the file inside the folder
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+
+    # Add extension to filename for download
+    filename = filename + '.' + file_extension
+
     file_path = os.path.join(folder_path, filename)
 
     # Check if the file exists

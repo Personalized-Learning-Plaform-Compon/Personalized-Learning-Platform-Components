@@ -26,7 +26,7 @@
             <tbody>
                 {% for file in folder.files %}  <tr>
                         <td>
-                            <a href="{{ url_for('download_from_folder', course_id=course.id, folder_name=folder.name, filename=file.filename) }}">{{ file.filename }}</a>
+                            <a href="{{ url_for('download_from_folder', course_id=course.id, folder_name=folder.name, filename=file.filename, file_extension=file.file_extension) }}">{{ file.filename }}</a>
                         </td>
                         <td>
                             {% if 'visual' in file.category %}  &#10004;
