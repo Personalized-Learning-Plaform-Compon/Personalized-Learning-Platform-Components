@@ -387,6 +387,7 @@ def upload_content(course_id):
         return redirect(url_for("course_page", course_id=course_id))
 
     file = request.files["file"]
+    file_name = request.form.get("file_name")
     folder_id = request.form.get("folder_id")
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
     content_types = ','.join(request.form.getlist('category'))
@@ -396,12 +397,15 @@ def upload_content(course_id):
         return redirect(url_for("course_page", course_id=course_id))
 
     if file and allowed_file(file.filename):
+        # Add original file extension to new file name entered in form
+        file_name = secure_filename(file_name + '.' + file.filename.rsplit('.', 1)[1].lower())
+
         # If a folder is selected, get the folder name from the database
         if folder_id:
             folder = Folder.query.get(folder_id)
             if folder and folder.course_id == course_id:
                 folder_name = folder.name
-                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, secure_filename(file.filename))
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, file_name)
             else:
                 flash("Invalid folder selected.", "danger")
                 return redirect(url_for("course_page", course_id=course_id))
@@ -422,14 +426,14 @@ def upload_content(course_id):
         file.save(file_path)
 
         # Save the file info in the database (replace the old entry if needed)
-        content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file.filename).first()
+        content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file_name).first()
         if content:
             content.file_url = file_path  # Update the file path if the file already exists
             content.category = content_types
         else:
             # If the file does not exist in the database, create a new entry
             content = CourseContent(
-                filename=file.filename,
+                filename=file_name,
                 file_url=file_path,
                 course_id=course_id,
                 folder_id=folder_id,
