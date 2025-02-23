@@ -138,46 +138,92 @@ def profile():
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    #user = User.query.get(user_id)
     user = db.session.get(User, user_id)
     if user is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
     student = Students.query.filter_by(user_id=user.id).first()
-    learning_methods = None
-    formatted_learning_methods = None
-    if student:
-        formatted_learning_methods = session.get('formatted_learning_methods', None)
-    # Update learning style
+    formatted_learning_methods = session.get('formatted_learning_methods', None)
+    
+    form = StudentProfileForm()
+    
+    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+@app.route('/update_learning_style', methods=['POST'])
+@login_required
+def update_learning_style():
+    user_id = session.get('_user_id')
+    if user_id is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    user = db.session.get(User, user_id)
+    if user is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    student = Students.query.filter_by(user_id=user.id).first()
+    if student is None:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('profile'))
+    
     form = StudentProfileForm()
     if form.validate_on_submit():
         try:
-            if student:
-                student.learning_style = form.learning_style.data
-                db.session.commit()
-                prompt = f"Generate ways to learn based on the {student.learning_style} learning style. (brief)"
-                response = openai_client.chat.completions.create(
-                    model='gpt-4o-mini',
-                    messages=[{"role": "system", "content": prompt}],
-                    max_tokens=500,
-                    temperature=0.3
-                )
-                learning_methods = response.choices[0].message.content
-                formatted_learning_methods = format_learning_methods(learning_methods)
-                session['formatted_learning_methods'] = formatted_learning_methods
-                flash('Learning style updated successfully.', 'success')
-            else:
-                flash('Student not found.', 'danger')
+            student.learning_style = form.learning_style.data
+            db.session.commit()
+            prompt = f"Generate ways to learn based on the {student.learning_style} learning style. (brief)"
+            response = openai_client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=[{"role": "system", "content": prompt}],
+                max_tokens=500,
+                temperature=0.3
+            )
+            learning_methods = response.choices[0].message.content
+            formatted_learning_methods = format_learning_methods(learning_methods)
+            session['formatted_learning_methods'] = formatted_learning_methods
+            flash('Learning style updated successfully.', 'success')
         except Exception as e:
             db.session.rollback()
             print(f"Error occurred: {e}")
             flash('An error occurred while updating learning style. Please try again.', 'danger')
-        return redirect(url_for('profile'))
     else:
         print(form.errors)  # Debugging: Print form errors to the console
     
-    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+    return redirect(url_for('profile'))
+
+@app.route('/update_learning_pace', methods=['POST'])
+@login_required
+def update_learning_pace():
+    user_id = session.get('_user_id')
+    if user_id is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    user = db.session.get(User, user_id)
+    if user is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    student = Students.query.filter_by(user_id=user.id).first()
+    if student is None:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('profile'))
+    
+    form = StudentProfileForm()
+    if form.validate_on_submit():
+        try:
+            student.learning_pace = form.learning_pace.data
+            db.session.commit()
+            flash('Learning pace updated successfully.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred: {e}")
+            flash('An error occurred while updating learning pace. Please try again.', 'danger')
+    else:
+        print(form.errors)  # Debugging: Print form errors to the console
+    
+    return redirect(url_for('profile'))
 
 def format_learning_methods(text):
     # Split text into individual points based on numbering

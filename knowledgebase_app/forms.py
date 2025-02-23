@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, PasswordField, SubmitField, RadioField
-from wtforms.validators import DataRequired, EqualTo
+from wtforms.validators import DataRequired, EqualTo, Optional
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -28,5 +28,10 @@ class StudentProfileForm(FlaskForm):
         ('Auditory', 'Auditory'),
         ('Kinesthetic', 'Kinesthetic'),
         ('Reading/Writing', 'Reading/Writing')
-    ], validators=[DataRequired()])
+    ], validators=[Optional()])
+    learning_pace = SelectField('Learning Pace', choices=[
+        ('Slow', 'Slow'),
+        ('Normal', 'Normal'),
+        ('Fast', 'Fast')
+    ], validators=[Optional()])
     submit = SubmitField('Submit')

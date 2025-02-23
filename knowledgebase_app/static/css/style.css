@@ -194,3 +194,17 @@ th, td {
 th {
     background-color: #f2f2f2;
 }
+
+.profile-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-form .form-group {
+    margin-bottom: 0;
+}
+
+.profile-form .form-control {
+    margin-right: 10px;
+}
