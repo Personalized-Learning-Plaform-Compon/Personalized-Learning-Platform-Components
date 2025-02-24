@@ -139,46 +139,92 @@ def profile():
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
-    #user = User.query.get(user_id)
     user = db.session.get(User, user_id)
     if user is None:
         flash("User not found. Please try again.", 'danger')
         return redirect(url_for('login'))
     
     student = Students.query.filter_by(user_id=user.id).first()
-    learning_methods = None
-    formatted_learning_methods = None
-    if student:
-        formatted_learning_methods = session.get('formatted_learning_methods', None)
-    # Update learning style
+    formatted_learning_methods = session.get('formatted_learning_methods', None)
+    
+    form = StudentProfileForm()
+    
+    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+@app.route('/update_learning_style', methods=['POST'])
+@login_required
+def update_learning_style():
+    user_id = session.get('_user_id')
+    if user_id is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    user = db.session.get(User, user_id)
+    if user is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    student = Students.query.filter_by(user_id=user.id).first()
+    if student is None:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('profile'))
+    
     form = StudentProfileForm()
     if form.validate_on_submit():
         try:
-            if student:
-                student.learning_style = form.learning_style.data
-                db.session.commit()
-                prompt = f"Generate ways to learn based on the {student.learning_style} learning style. (brief)"
-                response = openai_client.chat.completions.create(
-                    model='gpt-4o-mini',
-                    messages=[{"role": "system", "content": prompt}],
-                    max_tokens=500,
-                    temperature=0.3
-                )
-                learning_methods = response.choices[0].message.content
-                formatted_learning_methods = format_learning_methods(learning_methods)
-                session['formatted_learning_methods'] = formatted_learning_methods
-                flash('Learning style updated successfully.', 'success')
-            else:
-                flash('Student not found.', 'danger')
+            student.learning_style = form.learning_style.data
+            db.session.commit()
+            prompt = f"Generate ways to learn based on the {student.learning_style} learning style. (brief)"
+            response = openai_client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=[{"role": "system", "content": prompt}],
+                max_tokens=500,
+                temperature=0.3
+            )
+            learning_methods = response.choices[0].message.content
+            formatted_learning_methods = format_learning_methods(learning_methods)
+            session['formatted_learning_methods'] = formatted_learning_methods
+            flash('Learning style updated successfully.', 'success')
         except Exception as e:
             db.session.rollback()
             print(f"Error occurred: {e}")
             flash('An error occurred while updating learning style. Please try again.', 'danger')
-        return redirect(url_for('profile'))
     else:
         print(form.errors)  # Debugging: Print form errors to the console
     
-    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+    return redirect(url_for('profile'))
+
+@app.route('/update_learning_pace', methods=['POST'])
+@login_required
+def update_learning_pace():
+    user_id = session.get('_user_id')
+    if user_id is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    user = db.session.get(User, user_id)
+    if user is None:
+        flash("User not found. Please try again.", 'danger')
+        return redirect(url_for('login'))
+    
+    student = Students.query.filter_by(user_id=user.id).first()
+    if student is None:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('profile'))
+    
+    form = StudentProfileForm()
+    if form.validate_on_submit():
+        try:
+            student.learning_pace = form.learning_pace.data
+            db.session.commit()
+            flash('Learning pace updated successfully.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred: {e}")
+            flash('An error occurred while updating learning pace. Please try again.', 'danger')
+    else:
+        print(form.errors)  # Debugging: Print form errors to the console
+    
+    return redirect(url_for('profile'))
 
 def format_learning_methods(text):
     # Split text into individual points based on numbering
@@ -388,21 +434,26 @@ def upload_content(course_id):
         return redirect(url_for("course_page", course_id=course_id))
 
     file = request.files["file"]
+    file_name = request.form.get("file_name")
     folder_id = request.form.get("folder_id")
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
     content_types = ','.join(request.form.getlist('category'))
+    file_extension = file.filename.rsplit('.', 1)[1].lower()
 
     if file.filename == "":
         flash("No selected file", "danger")
         return redirect(url_for("course_page", course_id=course_id))
 
     if file and allowed_file(file.filename):
+
         # If a folder is selected, get the folder name from the database
         if folder_id:
             folder = Folder.query.get(folder_id)
             if folder and folder.course_id == course_id:
                 folder_name = folder.name
-                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, secure_filename(file.filename))
+
+                # Add file path with new file name + original file extension
+                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, secure_filename(file_name + '.' + file_extension))
             else:
                 flash("Invalid folder selected.", "danger")
                 return redirect(url_for("course_page", course_id=course_id))
@@ -423,19 +474,20 @@ def upload_content(course_id):
         file.save(file_path)
 
         # Save the file info in the database (replace the old entry if needed)
-        content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file.filename).first()
+        content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file_name).first()
         if content:
             content.file_url = file_path  # Update the file path if the file already exists
             content.category = content_types
         else:
             # If the file does not exist in the database, create a new entry
             content = CourseContent(
-                filename=file.filename,
+                filename=file_name,
                 file_url=file_path,
                 course_id=course_id,
                 folder_id=folder_id,
                 teacher_id=teacher.id,
-                category=content_types
+                category=content_types,
+                file_extension=file_extension
             )
             db.session.add(content)
         db.session.commit()
@@ -444,11 +496,15 @@ def upload_content(course_id):
 
     return redirect(url_for('manage_course', course_id=course_id))
 
-@app.route('/download_from_folder/<int:course_id>/<folder_name>/<filename>')
+@app.route('/download_from_folder/<int:course_id>/<folder_name>/<filename>/<file_extension>')
 @login_required
-def download_from_folder(course_id, folder_name, filename):
+def download_from_folder(course_id, folder_name, filename, file_extension):
     # Construct the file path for the file inside the folder
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+
+    # Adjust filename and append extension
+    filename = (filename + '.' + file_extension).replace(' ', '_')
+
     file_path = os.path.join(folder_path, filename)
 
     # Check if the file exists
@@ -498,6 +554,7 @@ def create_folder():
 def view_folder(folder_id):
     folder = Folder.query.get_or_404(folder_id)
     course = Courses.query.get(folder.course_id)
+    content = course.content
 
     # Check if the user has permission to access this folder
     if current_user.user_type == "teacher":
@@ -513,7 +570,7 @@ def view_folder(folder_id):
             flash("You do not have access to this folder.", "danger")
             return redirect(url_for("courses"))
 
-    return render_template("folder_page.html", folder=folder, course=course, user = current_user)
+    return render_template("folder_page.html", folder=folder, course=course, user = current_user, content=content)
 
 @app.route('/course/<int:course_id>/manage', methods=['GET', 'POST'])
 @login_required
@@ -648,14 +705,14 @@ def get_progress(student_id):
 def get_course_milestones(student_id, course_id):
     # Fetch total quizzes in the course
     total_quizzes = db.session.query(Quizzes).filter(
-        Quizzes.course_id == course_id
+        Quizzes.courses_id == course_id
     ).count()
 
     # Fetch completed quizzes in the course
     completed_quizzes = db.session.query(Student_Progress).join(Quizzes).filter(
         Student_Progress.student_id == student_id,
         Student_Progress.action == 'complete',
-        Quizzes.course_id == course_id
+        Quizzes.courses_id == course_id
     ).count()
 
     # Calculate completion percentage

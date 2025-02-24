@@ -4,6 +4,7 @@
 <h1>Managing Course: {{ course.name }}</h1>
 
 <!-- Form to create a folder -->
+<h2>Create New Folder</h2>
 <form action="{{ url_for('create_folder') }}" method="post">
     <input type="hidden" name="course_id" value="{{ course.id }}">
     <input type="text" name="folder_name" placeholder="Enter folder name" required>
@@ -15,6 +16,8 @@
 <form action="{{ url_for('upload_content', course_id=course.id) }}" method="POST" enctype="multipart/form-data">
     <label for="file">Choose File:</label>
     <input type="file" name="file" id="file" required><br><br>
+    <label for="file_name">Enter file name:</label>
+    <input type="text" name="file_name" id="file_name" placeholder="Enter file name" required><br><br>
     
     <label for="category">Select Content Type(s):</label>
     <select name="category" id="category" multiple required>

@@ -6,7 +6,7 @@
 <p>Welcome to the course page for "{{ course.name }}"!</p>
 
 <div class = "page-content">
-    <h2>Folders</h2>
+    <h2>Topics</h2>
     {% for folder in course.folders %}
         <div>
             <a href="{{ url_for('view_folder', folder_id=folder.id) }}">{{ folder.name }}</a>

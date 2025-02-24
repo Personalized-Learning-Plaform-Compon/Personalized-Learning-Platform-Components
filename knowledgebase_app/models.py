@@ -40,6 +40,7 @@ class Students(db.Model):
     strengths = db.Column(db.JSON, default={})
     weaknesses = db.Column(db.JSON, default={})
     learning_style = db.Column(db.JSON, default={})
+    learning_pace = db.Column(db.JSON, default={})
     user = db.relationship('User', backref=db.backref('students', lazy=True))
 
 class Teachers(db.Model):
@@ -66,7 +67,7 @@ class CourseEnrollment(db.Model):
 
 class Quizzes(db.Model):
     __tablename__ = 'quizzes'
-    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    courses_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     quiz_id = db.Column(db.Integer, primary_key=True, nullable=False)
     topic = db.Column(db.String(255), nullable=False)
     difficulty = db.Column(db.Enum('Easy', 'Medium', 'Hard', name="difficulty_enum"), nullable=False)
@@ -107,7 +108,10 @@ class CourseContent(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
     category = db.Column(db.String(255), nullable=True)
     
+    
     course = db.relationship('Courses', backref=db.backref('content', lazy=True))
     folder = db.relationship('Folder', backref=db.backref('files', lazy=True))
+
+    file_extension = db.Column(db.String(255), nullable=True)
 
 
