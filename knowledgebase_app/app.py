@@ -403,7 +403,7 @@ def course_page(course_id):
     course = Courses.query.get(course_id)
     if not course:
         flash("Course not found.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('dashboard'))
 
     # Check if the current user is enrolled in the course
     student = Students.query.filter_by(user_id=current_user.id).first()

@@ -1,9 +1,47 @@
 {% extends "index.html" %}
 
 {% block content %}
-<h1>{{ course.name }}</h1>
+<title>{{ course.name }}</title> - Course Page</title>
 
-<p>Welcome to the course page for "{{ course.name }}"!</p>
+<!--<h1>{{ course.name }}</h1>-->
+
+<!--Course header-->
+<div class="course-header">
+    <h1>{{ course.name }}</h1>
+</div>
+
+<div class="course-container">
+    <!--Left Sidebar: Lists of topics / Moudles -->
+    <h3> Topics </h3>
+    <ul class="course-sidebar">
+        {% for folder in course.folders %}
+            <li>
+                <a href="{{ url_for('view_folder', folder_id=folder.id) }}">{{ folder.name }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!--Main Content Area-->
+<div class="course-main">
+    <!--Circular Progress indicator-->
+    <div class="progress-section">
+        <div class="circular-progress">
+        <!--'83 can be replaced with dynamic progress data'-->
+        <span class="progress-value">{{ course.progress if course.progress else 0}}%</span>%
+        </div>
+        <p>Course Progress</p>
+    </div>
+
+
+<!--Course Overview / Content -->
+<div class="content-box">
+    <h3>Course Overview</h3>
+    <p>Welcome to the course page for "{{ course.name }}"!</p>
+    <!--Additional dynamic content will go here -->
+    </div>
+</div>
+</div>
 
 <div class = "page-content">
     <h2>Topics</h2>
