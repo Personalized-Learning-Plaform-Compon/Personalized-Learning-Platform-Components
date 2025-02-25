@@ -725,11 +725,7 @@ def get_progress(student_id):
     # Format the result as a list of dictionaries
     progress = [{'progress': "progress", 'student_id': student_id, 'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
 
-    if response.status_code == 200:
-        quiz_data = response.json()
-        return jsonify({"quiz": quiz_data["data"][0]})
-    else:
-        return jsonify({"error": "Failed to generate quiz", "details": response.text}), 500
+    return jsonify({"progress": progress})
 
 
 @app.route('/quiz')
