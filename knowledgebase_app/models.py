@@ -86,6 +86,7 @@ class Student_Progress(db.Model):
     time_spent = db.Column(db.Integer, nullable=False)
     action = db.Column(db.String(255)) #complete, review, start
     attempt_date = db.Column(db.DateTime, nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
 
 class Folder(db.Model):
     __tablename__ = 'folders'

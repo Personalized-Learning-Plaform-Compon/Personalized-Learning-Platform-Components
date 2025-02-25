@@ -42,6 +42,8 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     {% for course in courses %}
+    console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
+
     fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
         .then(response => response.json())
         .then(data => {

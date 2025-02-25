@@ -766,14 +766,15 @@ def get_course_milestones(student_id, course_id):
     ).count()
 
     # Fetch completed quizzes in the course
-    completed_quizzes = db.session.query(Student_Progress).join(Quizzes).filter(
+    completed_quizzes = db.session.query(Student_Progress).join(Quizzes, Student_Progress.quiz_id == Quizzes.quiz_id).filter(
         Student_Progress.student_id == student_id,
-        Student_Progress.action == 'complete',
+        Student_Progress.action == "complete",
         Quizzes.courses_id == course_id
     ).count()
 
     # Calculate completion percentage
     completion_percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
+    
 
     return jsonify({
         "student_id": student_id,
