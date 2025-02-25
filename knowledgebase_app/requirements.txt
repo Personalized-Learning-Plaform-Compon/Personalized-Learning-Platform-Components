@@ -5,3 +5,4 @@ flask-wtf
 flask-migrate
 psycopg2
 python-dotenv
+openai requests

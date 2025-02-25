@@ -3,3 +3,4 @@
 __pycache__/
 knowledge_base/__pycache__
 .env
+test_output.json

@@ -2,6 +2,12 @@ h1{
     text-align: center;
 }
 
+ul {
+    padding: 0;
+    list-style-type: none;
+}
+
+
 .centered{
     display: flex;
     justify-content: center;
@@ -67,7 +73,7 @@ h1{
     gap: 0.2rem;
 }
 
-#email, #password, #password2, #fname, #lname, #school {
+#email, #password, #password2, #fname, #lname, #school, #course_name {
     padding: 1rem 0.5rem;
     display: inline-block;
     margin: 1rem 0;
@@ -110,9 +116,9 @@ h1{
 
 /*Button styling*/
 .blue-btn, .red-btn{
-    display: flex;
-    height: 3rem;
-    width: 5rem;
+    display: inline-flex; /* Prevents the button from taking up the full width */
+    height: auto;
+    padding: 0.5rem 1rem; /* Add padding: top/bottom and left/right */
     border-radius: 1.0rem;
     text-decoration: none;
     color: #fff;
@@ -123,6 +129,7 @@ h1{
 
 .blue-btn{
     background-color: #007bff;
+    border: 2px solid black;
 }
 
 .red-btn{
@@ -163,4 +170,41 @@ h1{
     color: #721c24;
     border: 1px solid #f5c6cb;
 }
+
+.flashes {
+    list-style-type: none;
+}
   
+.page-content{
+    padding-bottom: 3rem;
+
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+.profile-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-form .form-group {
+    margin-bottom: 0;
+}
+
+.profile-form .form-control {
+    margin-right: 10px;
+}

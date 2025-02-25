@@ -10,32 +10,45 @@
     <p><strong>Email:</strong> {{ user.email }}</p>
     <p><strong>School:</strong> {{ user.school }}</p>
     <p><strong>User Type:</strong> {{ user.user_type }}</p>
-</div>
-
-<!-- Flash messages -->
-<div class="flash-messages">
-    {% with messages = get_flashed_messages(with_categories=True) %}
-        {% if messages %}
-            <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="message {{ category }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
+    <!--  Display if the user is a student -->
+    {% if user.user_type == 'student' %}
+    <p><strong>Learning Style:</strong> {{student.learning_style}}</p>
+    <p><strong>Learning Pace:</strong> {{student.learning_pace}}</p>
+    {% endif %}
 </div>
 
 
-<!-- Form to select learning style : Only shows for students -->
- {%if user.user_type == 'student' %}
-<form method="POST" action="{{ url_for('profile') }}">
+<!-- Form to select learning style: Only shows for students -->
+{% if user.user_type == 'student' %}
+<form method="POST" action="{{ url_for('update_learning_style') }}" class="profile-form">
     {{ form.hidden_tag() }}
     <div class="form-group">
         <label for="learning_style">Select Learning Style:</label>
         {{ form.learning_style(class="form-control") }}
+    </div>
+    <div class="form-group">
         {{ form.submit(class="red-btn") }}
     </div>
 </form>
+
+<!-- Form to select learning pace: Only shows for students -->
+<form method="POST" action="{{ url_for('update_learning_pace') }}" class="profile-form">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        <label for="learning_pace">Select Learning Pace:</label>
+        {{ form.learning_pace(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.submit(class="red-btn") }}
+    </div>
+</form>
+{% endif %}
+
+{% if formatted_learning_methods %}
+<div class="learning-methods">
+    <h2>Recommended {{student.learning_style}} Learning Methods</h2>
+    <p>{{ formatted_learning_methods | safe}}</p>
+</div>
 {% endif %}
 
 <a href="{{ url_for('logout') }}" class="red-btn">Logout</a>

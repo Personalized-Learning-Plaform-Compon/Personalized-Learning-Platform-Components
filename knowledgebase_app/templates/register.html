@@ -15,19 +15,6 @@
          {{ form.user_type }}
         {{ form.submit(class="red-btn") }}
 
-
-        <!-- Flash messages near the sign-up button -->
-        <div class="flash-messages">
-            {% with messages = get_flashed_messages(with_categories=True) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="message {{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
         <a id="rgstr-btn" href="{{ url_for('login') }}">Login</a>
     </form>
 </div>
