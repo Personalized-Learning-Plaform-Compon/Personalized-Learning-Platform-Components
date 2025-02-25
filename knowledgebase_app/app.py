@@ -1,5 +1,5 @@
 import os
-import re
+import requests
 from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
@@ -655,51 +655,6 @@ def delete_folder():
     flash("Folder and its files deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=folder.course_id))
 
-
-def generate_quiz(topic_text, num_questions=5):
-    """Generate quiz questions from a given topic text using Huggingface API."""
-    quiz_questions = []
-    
-#     Parameters:
-#     topic_text (str): The text from which to generate questions.
-#     num_questions (int): The number of questions to generate. Default is 5.
-    
-#     Returns:
-#     list: A list of generated quiz questions.
-#     """
-#     quiz_questions = []
-
-#     for i in range(num_questions):
-#         prompt = f"Generate a question from the following text: {topic_text}"
-#         response = requests.post(
-#             "https://api-inference.huggingface.co/models/t5-small",
-#             headers={"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"},
-#             json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
-#         )
-#         if response.status_code != 200:
-#             return jsonify({"error": "Quiz generation failed. Please try again later."}), 500
-
-#         generated_text = response.json()[0]['generated_text']
-
-#         quiz_questions.append(generated_text)
-
-#     return quiz_questions
-
-
-# @app.route("/quiz", methods=["GET", "POST"])
-# def quiz():
-#     data = request.get_json()
-#     topic_text = data.get("topic_text", "")
-#     num_questions = int(data.get("num_questions", 5))
-
-#     if not topic_text:
-#         return jsonify({"error": "Please provide a topic_text"}), 400
-
-#     quiz_questions = generate_quiz(topic_text, num_questions)
-#     return jsonify({"quiz_questions": quiz_questions})
-
-#     return render_template('quiz.html')
-
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
 def generate_quiz():
@@ -709,6 +664,9 @@ def generate_quiz():
     gradio_api_url = "http://127.0.0.1:7860/api/predict"
     payload = {"data": [topic]}
 
+    response = requests.post(gradio_api_url, json=payload)
+
+    print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging line
     quiz_questions = generate_quiz(topic_text, num_questions)
     
     return jsonify({"quiz_questions": quiz_questions})
