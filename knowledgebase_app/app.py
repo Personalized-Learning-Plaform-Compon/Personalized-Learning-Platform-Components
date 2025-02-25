@@ -660,27 +660,54 @@ def generate_quiz(topic_text, num_questions=5):
     """Generate quiz questions from a given topic text using Huggingface API."""
     quiz_questions = []
     
-    for i in range(num_questions):
-        prompt = f"Generate a question from the following text: {topic_text}"
-        response = requests.post(
-            "https://api-inference.huggingface.co/models/t5-small",
-            headers={"Authorization": f"Bearer {os.getenv('huggingface-api-key')}"},
-            json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
-        )
-        generated_text = response.json()[0]['generated_text']
-        
-        quiz_questions.append(generated_text)
+#     Parameters:
+#     topic_text (str): The text from which to generate questions.
+#     num_questions (int): The number of questions to generate. Default is 5.
     
-    return quiz_questions
+#     Returns:
+#     list: A list of generated quiz questions.
+#     """
+#     quiz_questions = []
 
-@app.route("/generate_quiz", methods=["POST"])
-def generate_quiz_endpoint():
+#     for i in range(num_questions):
+#         prompt = f"Generate a question from the following text: {topic_text}"
+#         response = requests.post(
+#             "https://api-inference.huggingface.co/models/t5-small",
+#             headers={"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"},
+#             json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
+#         )
+#         if response.status_code != 200:
+#             return jsonify({"error": "Quiz generation failed. Please try again later."}), 500
+
+#         generated_text = response.json()[0]['generated_text']
+
+#         quiz_questions.append(generated_text)
+
+#     return quiz_questions
+
+
+# @app.route("/quiz", methods=["GET", "POST"])
+# def quiz():
+#     data = request.get_json()
+#     topic_text = data.get("topic_text", "")
+#     num_questions = int(data.get("num_questions", 5))
+
+#     if not topic_text:
+#         return jsonify({"error": "Please provide a topic_text"}), 400
+
+#     quiz_questions = generate_quiz(topic_text, num_questions)
+#     return jsonify({"quiz_questions": quiz_questions})
+
+#     return render_template('quiz.html')
+
+@app.route('/generate_quiz', methods=['POST'])
+@login_required
+def generate_quiz():
     data = request.get_json()
-    topic_text = data.get("topic_text", "")
-    num_questions = data.get("num_questions", 5)
+    topic = data.get("topic", "General Knowledge")
 
-    if not topic_text:
-        return jsonify({"error": "Please provide a topic_text"}), 400
+    gradio_api_url = "http://127.0.0.1:7860/api/predict"
+    payload = {"data": [topic]}
 
     quiz_questions = generate_quiz(topic_text, num_questions)
     
@@ -698,7 +725,17 @@ def get_progress(student_id):
     # Format the result as a list of dictionaries
     progress = [{'progress': "progress", 'student_id': student_id, 'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
 
-    return jsonify(progress)
+    if response.status_code == 200:
+        quiz_data = response.json()
+        return jsonify({"quiz": quiz_data["data"][0]})
+    else:
+        return jsonify({"error": "Failed to generate quiz", "details": response.text}), 500
+
+
+@app.route('/quiz')
+@login_required
+def quiz():
+    return render_template('quiz.html')  
 
 @app.route('/milestones/<int:student_id>/<int:course_id>')
 @login_required
@@ -709,14 +746,15 @@ def get_course_milestones(student_id, course_id):
     ).count()
 
     # Fetch completed quizzes in the course
-    completed_quizzes = db.session.query(Student_Progress).join(Quizzes).filter(
+    completed_quizzes = db.session.query(Student_Progress).join(Quizzes, Student_Progress.quiz_id == Quizzes.quiz_id).filter(
         Student_Progress.student_id == student_id,
-        Student_Progress.action == 'complete',
+        Student_Progress.action == "complete",
         Quizzes.courses_id == course_id
     ).count()
 
     # Calculate completion percentage
     completion_percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
+    
 
     return jsonify({
         "student_id": student_id,
@@ -799,3 +837,7 @@ if __name__ == "__main__":
     app.run(debug=True)
 
 
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
