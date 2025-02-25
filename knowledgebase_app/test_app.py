@@ -202,7 +202,6 @@ def test_update_learning_style(client):
             user_id=user_id,
             name='Student Test',
             learning_style='Auditory',
-            learning_pace='Normal',
             progress={}, feedback=None, preferred_topics={}, strengths={}, weaknesses={})
                            
         db.session.add(student)
@@ -216,7 +215,6 @@ def test_update_learning_style(client):
 
     # Define new learning style data to update
     new_learning_style = "Visual"
-    new_learning_pace = 'Normal'
 
     # Mock the OpenAI API call
     with patch('app.openai_client') as mock_openai_client:
@@ -224,9 +222,8 @@ def test_update_learning_style(client):
         mock_response.choices = [MagicMock(message=MagicMock(content="Mocked learning methods"))]
         mock_openai_client.chat.completions.create.return_value = mock_response  # Mock the create method
         # Post new learning style via the update form (endpoint assumed to be '/profile')
-        response = client.post('/update_learning_style', data={
-            'learning_style': new_learning_style,
-            #'learning_pace': new_learning_pace
+        response = client.post('/profile', data={
+            'learning_style': new_learning_style
         }, follow_redirects=True)
     
     # Check for the success flash message in the response
@@ -237,5 +234,4 @@ def test_update_learning_style(client):
     updated_student = db.session.get(Students, user_id)
     assert updated_student is not None
     assert updated_student.learning_style == new_learning_style
-    assert updated_student.learning_pace == new_learning_pace
      
