@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, session, jsonify
+import requests
+from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from flask_migrate import Migrate
@@ -27,7 +28,7 @@ login_manager.login_view = "login"
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 @app.route('/')
 def home():
@@ -175,54 +176,74 @@ def survey():
 def courses():
     return render_template('courses.html')
 
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
-
-def generate_quiz(topic_text, num_questions=5):
-    """Generate quiz questions from a given topic text using Huggingface API."""
-    quiz_questions = []
+# def generate_quiz(topic_text, num_questions=5):
+#     """
+#     Generate quiz questions from a given topic text using Huggingface API.
     
-    for i in range(num_questions):
-        prompt = f"Generate a question from the following text: {topic_text}"
-        response = requests.post(
-            "https://api-inference.huggingface.co/models/t5-small",
-            headers={"Authorization": f"Bearer {os.getenv('huggingface-api-key')}"},
-            json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
-        )
-        generated_text = response.json()[0]['generated_text']
-        
-        quiz_questions.append(generated_text)
+#     Parameters:
+#     topic_text (str): The text from which to generate questions.
+#     num_questions (int): The number of questions to generate. Default is 5.
     
-    return quiz_questions
+#     Returns:
+#     list: A list of generated quiz questions.
+#     """
+#     quiz_questions = []
 
-@app.route("/generate_quiz", methods=["POST"])
-def generate_quiz_endpoint():
+#     for i in range(num_questions):
+#         prompt = f"Generate a question from the following text: {topic_text}"
+#         response = requests.post(
+#             "https://api-inference.huggingface.co/models/t5-small",
+#             headers={"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}"},
+#             json={"inputs": prompt, "parameters": {"max_length": 100, "do_sample": True}}
+#         )
+#         if response.status_code != 200:
+#             return jsonify({"error": "Quiz generation failed. Please try again later."}), 500
+
+#         generated_text = response.json()[0]['generated_text']
+
+#         quiz_questions.append(generated_text)
+
+#     return quiz_questions
+
+
+# @app.route("/quiz", methods=["GET", "POST"])
+# def quiz():
+#     data = request.get_json()
+#     topic_text = data.get("topic_text", "")
+#     num_questions = int(data.get("num_questions", 5))
+
+#     if not topic_text:
+#         return jsonify({"error": "Please provide a topic_text"}), 400
+
+#     quiz_questions = generate_quiz(topic_text, num_questions)
+#     return jsonify({"quiz_questions": quiz_questions})
+
+#     return render_template('quiz.html')
+
+@app.route('/generate_quiz', methods=['POST'])
+@login_required
+def generate_quiz():
     data = request.get_json()
-    topic_text = data.get("topic_text", "")
-    num_questions = data.get("num_questions", 5)
+    topic = data.get("topic", "General Knowledge")
 
-    if not topic_text:
-        return jsonify({"error": "Please provide a topic_text"}), 400
+    gradio_api_url = "http://127.0.0.1:7860/api/predict"
+    payload = {"data": [topic]}
 
-    quiz_questions = generate_quiz(topic_text, num_questions)
-    
-    return jsonify({"quiz_questions": quiz_questions})
+    response = requests.post(gradio_api_url, json=payload)
 
-@app.route('/progress/<int:student_id>')
-def get_progress(student_id):
-    # Query to calculate the average score for each topic for the given student
-    results = (
-        db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
-        .filter(Student_Progress.student_id == student_id)
-        .group_by(Student_Progress.topic)
-        .all()
-    )
-    # Format the result as a list of dictionaries
-    progress = [{'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
+    print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging line
 
-    return jsonify(progress)
+    if response.status_code == 200:
+        quiz_data = response.json()
+        return jsonify({"quiz": quiz_data["data"][0]})
+    else:
+        return jsonify({"error": "Failed to generate quiz", "details": response.text}), 500
+
+
+@app.route('/quiz')
+@login_required
+def quiz():
+    return render_template('quiz.html')  
 
 def analyze_strengths_weaknesses(student_id):
     results = (
@@ -261,3 +282,7 @@ def recommend_content(student_id):
     return {"weak_areas": weak_recommendations, "strong_areas": strong_recommendations}
 
 
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)

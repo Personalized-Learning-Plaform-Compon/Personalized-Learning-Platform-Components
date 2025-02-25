@@ -1,0 +1,23 @@
+<form id="quizForm">
+    <label for="quizTopic">Enter Quiz Topic:</label>
+    <input type="text" id="quizTopic" name="topic" required>
+    <button type="submit">Generate Quiz</button>
+</form>
+
+<div id="quizResults"></div>
+
+<script>
+    document.getElementById("quizForm").onsubmit = async function(e) {
+        e.preventDefault();
+        let topic = document.getElementById("quizTopic").value;
+
+        let response = await fetch("/generate_quiz", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic: topic })
+        });
+
+        let data = await response.json();
+        document.getElementById("quizResults").innerText = data.quiz || "Error generating quiz.";
+    };
+</script>
