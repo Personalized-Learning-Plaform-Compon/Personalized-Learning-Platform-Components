@@ -1,11 +1,11 @@
 import os
 import requests
+import re
 from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename, safe_join
 from flask_migrate import Migrate
-import requests 
 import openai 
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
@@ -46,7 +46,7 @@ login_manager.login_view = "login"
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, user_id)
+    return db.session.get(User, int(user_id))
 
 @app.route('/')
 def home():
@@ -655,6 +655,11 @@ def delete_folder():
     flash("Folder and its files deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=folder.course_id))
 
+
+def generate_quiz(topic_text, num_questions=5):
+    """Generate quiz questions from a given topic text using Huggingface API."""
+    quiz_questions = []
+
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
 def generate_quiz():
@@ -667,22 +672,8 @@ def generate_quiz():
     response = requests.post(gradio_api_url, json=payload)
 
     print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging line
-    quiz_questions = generate_quiz(topic_text, num_questions)
-    
-    return jsonify({"quiz_questions": quiz_questions})
-    
-@app.route('/progress/<int:student_id>')
-def get_progress(student_id):
-    # Query to calculate the average score for each topic for the given student
-    results = (
-        db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
-        .filter(Student_Progress.student_id == student_id)
-        .group_by(Student_Progress.topic)
-        .all()
-    )
-    # Format the result as a list of dictionaries
-    progress = [{'progress': "progress", 'student_id': student_id, 'topic': topic, 'avg_score': avg_score} for topic, avg_score in results]
 
+    progress = response.json().get("data", [])
     return jsonify({"progress": progress})
 
 
