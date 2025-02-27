@@ -1,9 +1,7 @@
 {% extends "index.html" %}
 
 {% block content %}
-<title>{{ course.name }}</title> - Course Page</title>
 
-<!--<h1>{{ course.name }}</h1>-->
 
 <!--Course header-->
 <div class="course-header">
@@ -43,14 +41,17 @@
 </div>
 </div>
 
-<div class = "page-content">
-    <h2>Topics</h2>
-    {% for folder in course.folders %}
-        <div>
-            <a href="{{ url_for('view_folder', folder_id=folder.id) }}">{{ folder.name }}</a>
+<!-- New Section: Content Based on Learning Style -->
+ {% if suggested_content %}
+<div class="learning-style-content">
+    <h3>Content for {{ student.learning_style }} Learners</h3>
+    {% for content in suggested_content %}
+        <div class="content-item">
+            <a href="{{ url_for('download_from_folder', course_id=course.id, folder_name=content.folder.name, filename=content.filename, file_extension=content.file_extension) }}">{{ content.filename }}</a>
         </div>
     {% endfor %}
 </div>
+{% endif %}
 
 <a href="{{ url_for('dashboard') }}" class="blue-btn">Back to Dashboard</a>
 {% endblock %}

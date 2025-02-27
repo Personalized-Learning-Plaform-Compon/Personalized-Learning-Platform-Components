@@ -415,9 +415,12 @@ def course_page(course_id):
     if not enrollment:
         flash("You are not enrolled in this course.", "danger")
         return redirect(url_for('courses'))
+    # Get all content related to the student's learning style
+    content = course.content
+    suggested_content = [file for file in content if file.category in student.learning_style.lower()]
 
     # Pass the course to the template
-    return render_template('course_page.html', course=course)
+    return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
