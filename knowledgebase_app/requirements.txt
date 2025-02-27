@@ -7,3 +7,4 @@ psycopg2
 python-dotenv
 openai 
 requests
+bootstrap-flask
