@@ -417,8 +417,14 @@ def course_page(course_id):
         return redirect(url_for('courses'))
     # Get all content related to the student's learning style
     content = course.content
-    suggested_content = [file for file in content if file.category in student.learning_style.lower()]
-
+    #suggested_content = [file for file in content if file.category in student.learning_style.lower()]
+    suggested_content = []
+    for file in content:
+        if file.category:
+            categories = file.category.split(",")
+            for category in categories:
+                if category.strip().lower() in student.learning_style.lower():
+                    suggested_content.append(file)
     # Pass the course to the template
     return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student)
 
