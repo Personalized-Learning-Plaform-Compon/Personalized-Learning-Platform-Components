@@ -10,7 +10,7 @@
     <div class="courses">
       {% for course in courses %}
         <div class="course-card">
-          <h3>{{ course.name }}</h3>
+          <h3>{{ course.name }}</h3
           <a href="{{ url_for('course_page', course_id=course.id) }}" class="blue-btn">View Course</a>
           <div class="progress-section" id="milestone-container-{{ course.id }}">
             <div class="progress-bar">
