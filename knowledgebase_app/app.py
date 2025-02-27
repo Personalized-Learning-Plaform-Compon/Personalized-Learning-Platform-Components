@@ -691,21 +691,38 @@ def generate_quiz(topic_text, num_questions=5):
     """Generate quiz questions from a given topic text using Huggingface API."""
     quiz_questions = []
 
+# @app.route('/generate_quiz', methods=['POST'])
+# @login_required
+# def generate_quiz():
+#     data = request.get_json()
+#     topic = data.get("topic", "General Knowledge")
+
+#     gradio_api_url = "http://127.0.0.1:7860/api/predict"
+#     payload = {"data": [topic]}
+
+#     response = requests.post(gradio_api_url, json=payload)
+
+#     print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging line
+
+#     progress = response.json().get("data", [])
+#     return jsonify({"progress": progress})
+
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
-def generate_quiz():
+def generate_quiz_endpoint():
     data = request.get_json()
     topic = data.get("topic", "General Knowledge")
-
     gradio_api_url = "http://127.0.0.1:7860/api/predict"
     payload = {"data": [topic]}
-
+    
+    # Make the POST request to the Gradio API
     response = requests.post(gradio_api_url, json=payload)
+    print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging
 
-    print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging line
+    # Retrieve quiz questions from the response JSON
+    quiz_questions = response.json().get("data", [])
+    return jsonify({"quiz_questions": quiz_questions})
 
-    progress = response.json().get("data", [])
-    return jsonify({"progress": progress})
 
 
 @app.route('/quiz')
