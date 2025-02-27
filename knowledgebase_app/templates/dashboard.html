@@ -8,10 +8,10 @@
   
   {% if courses %}
     <div class="courses">
-      {% for course in courses %}
+      {% for course, teacher in courses %}
         <div class="course-card">
-          <h3>{{ course.name }}</h3
-          <a href="{{ url_for('course_page', course_id=course.id) }}" class="blue-btn">View Course</a>
+          <h3>{{ course.name }}</h3>
+          <p>Taught by: <em>{{ teacher.name }}</em></p>
           <div class="progress-section" id="milestone-container-{{ course.id }}">
             <div class="progress-bar">
               <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
@@ -34,11 +34,11 @@
   {% endif %}
 </div>
 
-<a href="{{ url_for('courses') }}" class="red-btn">Add Course</a>
+<a href="{{ url_for('courses') }}" class="red-btn">Add course</a>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  {% for course in courses %}
+  {% for course, teacher in courses %}
   console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
   fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
     .then(response => response.json())
@@ -46,8 +46,6 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
       document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
       document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
-
-      // Adjust progress bar width
       document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
     })
     .catch(error => console.error("Error fetching milestone data:", error));
@@ -125,5 +123,4 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 }
 </style>
-
 {% endblock %}

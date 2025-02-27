@@ -237,6 +237,7 @@ def format_learning_methods(text):
         formatted_list.append(f"<li><strong>{title}</strong>: {description}</li>")
     
     return "<ul>" + "".join(formatted_list) + "</ul>"
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -247,15 +248,17 @@ def dashboard():
         flash('Student not found. Please try again.', 'danger')
         return redirect(url_for('profile'))
 
-    # Retrieve only courses where the student is actually enrolled
+    # Retrieve courses along with teacher information
     enrolled_courses = (
-        db.session.query(Courses)
+        db.session.query(Courses, Teachers)
         .join(CourseEnrollment, Courses.id == CourseEnrollment.course_id)
-        .filter(CourseEnrollment.student_id == student.id)  # Fix: Use student.id
+        .join(Teachers, Courses.teacher_id == Teachers.id)
+        .filter(CourseEnrollment.student_id == student.id)
         .all()
     )
 
     return render_template('dashboard.html', user=user, courses=enrolled_courses)
+
 
 
 @app.route('/survey')
