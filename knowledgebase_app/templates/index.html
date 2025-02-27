@@ -13,6 +13,7 @@
                     {% if current_user.user_type == "student" %}
                         <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li> <!-- TO DO: Learning style selection and quiz only needs to show for students -->
                         <li><a href="{{ url_for('dashboard') }}">Student Dashboard</a></li>
+                        <li><a href="{{ url_for('quiz') }}"> Quiz</a></li>
                     {% elif current_user.user_type == "teacher" %}
                         <!-- TO DO: add teacher view dashboard-->
                         <li><a href="{{ url_for('my_courses') }}">My Courses</a></li>
@@ -22,7 +23,6 @@
                 {% endif %}
                 <li><a href="{{ url_for('home') }}">Home</a></li>
                 <li><a href="{{ url_for('about') }}">About Us</a></li>
-                <li><a href="{{ url_for('quiz') }}"> Quiz</a></li>
             </ul>
         </nav>
         

@@ -4,91 +4,125 @@
 <title>Student Dashboard</title>
 <h1>Welcome, {{ user.fname }} {{ user.lname }}!</h1>
 
-<div class = "page-content">
-    <h2>Your Enrolled Courses</h2>
-    {% if courses %}
-        {% for course in courses %}
-            <div class="course-container">
-                <a href="{{ url_for('course_page', course_id=course.id) }}">{{ course.name }}</a>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>You are not enrolled in any courses yet.</p>
-    {% endif %}
-</div>
-<a href="{{ url_for('courses') }}" class="red-btn">Add course</a>
-
-
-<div class="container">
-    <h2>Dashboard</h2>
-    
+<div class="dashboard-container">
+  
+  {% if courses %}
     <div class="courses">
-        {% for course in courses %}
+      {% for course in courses %}
         <div class="course-card">
-            <h3>{{ course.name }}</h3>
-            <div class="progress-section" id="milestone-container-{{ course.id }}">
-                <div class="progress-bar">
-                    <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
-                </div>
-                <p><strong>Completed:</strong> <span id="completed-quizzes-{{ course.id }}">0</span> / 
-                <span id="total-quizzes-{{ course.id }}">0</span></p>
-                <p><strong>Progress:</strong> <span id="progress-percentage-{{ course.id }}">0%</span></p>
+          <h3>{{ course.name }}</h3>
+          <a href="{{ url_for('course_page', course_id=course.id) }}" class="blue-btn">View Course</a>
+          <div class="progress-section" id="milestone-container-{{ course.id }}">
+            <div class="progress-bar">
+              <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
             </div>
+            <p>
+              <strong>Completed:</strong> 
+              <span id="completed-quizzes-{{ course.id }}">0</span> / 
+              <span id="total-quizzes-{{ course.id }}">0</span>
+            </p>
+            <p>
+              <strong>Progress:</strong> 
+              <span id="progress-percentage-{{ course.id }}">0%</span>
+            </p>
+          </div>
         </div>
-        {% endfor %}
+      {% endfor %}
     </div>
+  {% else %}
+    <p>You are not enrolled in any courses yet.</p>
+  {% endif %}
 </div>
+
+<a href="{{ url_for('courses') }}" class="red-btn">Add Course</a>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    {% for course in courses %}
-    console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
+  {% for course in courses %}
+  console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
+  fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
+      document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
+      document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
 
-    fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
-            document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
-            document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
-
-            // Adjust progress bar width
-            document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
-        })
-        .catch(error => console.error("Error fetching milestone data:", error));
-    {% endfor %}
+      // Adjust progress bar width
+      document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
+    })
+    .catch(error => console.error("Error fetching milestone data:", error));
+  {% endfor %}
 });
 </script>
 
 <style>
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
 .courses {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
+
 .course-card {
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 10px;
-    background:rgb(190, 191, 243);
-    width: 300px;
-    text-align: center;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgb(190, 191, 243);
+  width: 300px;
+  text-align: center;
 }
+
 .progress-section {
-    margin-top: 10px;
-    padding: 10px;
+  margin-top: 10px;
+  padding: 10px;
 }
+
 .progress-bar {
-    width: 100%;
-    height: 20px;
-    background: #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
+  width: 100%;
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
 }
+
 .progress-fill {
-    height: 100%;
-    background: #4CAF50;
-    width: 0%;
-    transition: width 0.5s ease-in-out;
+  height: 100%;
+  background: #4CAF50;
+  width: 0%;
+  transition: width 0.5s ease-in-out;
+}
+
+.blue-btn, .red-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 10px 5px;
+  border-radius: 5px;
+  text-decoration: none;
+  color: white;
+}
+
+.blue-btn {
+  background-color: #007BFF;
+}
+
+.red-btn {
+  background-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .courses {
+    flex-direction: column;
+  }
 }
 </style>
 

@@ -209,69 +209,74 @@ th {
     margin-right: 10px;
 }
 
-/*Course Page Header */
+/* Course Page Header */
 .course-header {
-    background-color: #007bff; /*Blue header*/
+    background-color: #007BFF;  /* Blue header matching the mockup */
     color: white;
-    padding: 20px;
     text-align: center;
+    padding: 20px;
     border-radius: 5px;
     margin-bottom: 20px;
-}
-
-/*Course Container Layout*/
-.course-container {
+  }
+  
+  /* Layout for the Course Page */
+  .course-container {
     display: flex;
     gap: 20px;
-}
-
-/*Sidebar */ 
-.course-sidebar {
+  }
+  
+  /* Sidebar Styles */
+  .course-sidebar {
     width: 200px;
     background-color: #f5f5f5;
     padding: 15px;
-    border-radius: 5px;
     border-right: 1px solid #ddd;
-}
-.course-sidebar h3 {
+    border-radius: 5px;
+  }
+  .course-sidebar h3 {
     margin-top: 0;
-}
-.course-sidebar ul {
+  }
+  .course-sidebar ul {
+    list-style: none;
     padding: 0;
-    list-style-type: none;
-}
-.course-sidebar ul li {
+  }
+  .course-sidebar ul li {
     margin-bottom: 10px;
-}
-.course-sidebar ul li a:hover {
+  }
+  .course-sidebar ul li a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px;
+    display: block;
+    border-radius: 3px;
+  }
+  .course-sidebar ul li a:hover {
     background-color: #e1e1e1;
-}
-
-/*Main Content Area */
-.course.main {
+  }
+  
+  /* Main Content Area */
+  .course-main {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-/*Circuluar Progress Indicatior */
-.progress-section{
+  }
+  
+  /* Circular Progress Section */
+  .progress-section {
     display: flex;
     align-items: center;
     gap: 20px;
-}
-.circular-progress {
+  }
+  .circular-progress {
     width: 100px;
     height: 100px;
-    /* The conic-gradient below uses a hardcoded example; 
-       replace with dynamic progress using inline style or JavaScript if needed */
-    background: conic-gradient(#ff4500 calc(83 * 3.6deg), #ededed 0);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    /* Background is set inline from the template for dynamic progress */
   }
   .circular-progress .progress-value {
     position: absolute;
@@ -318,30 +323,4 @@ th {
       border-bottom: 1px solid #ddd;
     }
   }
-
-/* PDF Viewer Container */
-.pdf-container {
-    width: 100%;
-    height: 85vh; /* Reduce height slightly to show a gap */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Ensure iframe scales properly */
-.pdf-container iframe {
-    width: 95%; /* Slight padding on the sides */
-    height: 100%;
-    border: none;
-}
-
-/* Adjust for smaller screens */
-@media (max-width: 768px) {
-    .pdf-container {
-        height: 80vh; /* More pronounced gap on mobile */
-    }
-}
-
-#my{
-    zoom: 100%;
-    }
+  
