@@ -1,0 +1,24 @@
+{% extends 'index.html' %}
+
+{% block content %}
+
+
+<body>
+
+    <h1>{{ filename }}</h2>
+
+    <div class="pdf-container">
+        <iframe src="{{ pdf_url }}"></iframe>
+    </div>
+
+    <button class="blue-btn" onclick="goBack()">Go Back</button>
+
+<script>
+function goBack() {
+  window.history.back();
+}
+
+</script>
+
+</body>
+{% endblock %}

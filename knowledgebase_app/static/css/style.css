@@ -318,3 +318,30 @@ th {
       border-bottom: 1px solid #ddd;
     }
   }
+
+/* PDF Viewer Container */
+.pdf-container {
+    width: 100%;
+    height: 85vh; /* Reduce height slightly to show a gap */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Ensure iframe scales properly */
+.pdf-container iframe {
+    width: 95%; /* Slight padding on the sides */
+    height: 100%;
+    border: none;
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 768px) {
+    .pdf-container {
+        height: 80vh; /* More pronounced gap on mobile */
+    }
+}
+
+#my{
+    zoom: 100%;
+    }

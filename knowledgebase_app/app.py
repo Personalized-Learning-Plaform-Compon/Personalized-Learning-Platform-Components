@@ -1,7 +1,7 @@
 import os
 import requests
 import re
-from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory
+from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory, send_file
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename, safe_join
@@ -499,20 +499,39 @@ def upload_content(course_id):
 
     return redirect(url_for('manage_course', course_id=course_id))
 
-@app.route('/download_from_folder/<int:course_id>/<folder_name>/<filename>/<file_extension>')
+@app.route('/view_pdf/<int:course_id>/<folder_name>/<filename>/<file_extension>')
 @login_required
-def download_from_folder(course_id, folder_name, filename, file_extension):
-    # Construct the file path for the file inside the folder
+def view_pdf(course_id, folder_name, filename, file_extension):
+    if file_extension.lower() != "pdf":
+        flash("Only PDF files can be viewed.", "warning")
+        return redirect(url_for('profile'))
+
+    # Construct the file path
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
 
-    # Adjust filename and append extension
+    # Keep filename as it appears on site
+    original_filename = filename
+
+    # Get proper filename stored on device
     filename = (filename + '.' + file_extension).replace(' ', '_')
 
     file_path = os.path.join(folder_path, filename)
 
-    # Check if the file exists
+    # Check if file exists
+    if not os.path.exists(file_path):
+        flash("File not found.", "danger")
+        return redirect(url_for('profile'))
+
+    return render_template('view_pdf.html', pdf_url=url_for('serve_pdf', course_id=course_id, folder_name=folder_name, filename=filename), filename = original_filename)
+
+@app.route('/serve_pdf/<int:course_id>/<folder_name>/<filename>')
+@login_required
+def serve_pdf(course_id, folder_name, filename):
+    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+    file_path = os.path.join(folder_path, filename)
+
     if os.path.exists(file_path):
-        return send_from_directory(folder_path, filename, as_attachment=True)
+        return send_file(file_path, mimetype="application/pdf")
     else:
         flash("File not found.", "danger")
         return redirect(url_for('profile'))
