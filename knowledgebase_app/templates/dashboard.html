@@ -38,6 +38,21 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    {% for course in courses %}
+
+    fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
+            document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
+            document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
+
+            // Adjust progress bar width
+            document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
+        })
+        .catch(error => console.error("Error fetching milestone data:", error));
+    {% endfor %}
+    
   {% for course, teacher in courses %}
   console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
   fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
@@ -123,4 +138,45 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 }
 </style>
+
+<div class="container">
+    <h2>Recommended Quizzes</h2>
+    <div id="recommendations-container">
+        <h3>Weak Areas: </h3>
+        <ul id="weak-recommendations"></ul>
+        
+        <h3>Strong Areas: </h3>
+        <ul id="strong-recommendation"></ul>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("/recommendations/{{ current_user.id }}")
+        .then(response => response.json())
+        .then(data => {
+            const weakList = document.getElementById("weak-recommendations");
+
+            // Clear the list first (in case of previous content)
+            weakList.innerHTML = "";
+
+            if (data.weak_areas_quizzes.length === 0) {
+                weakList.innerHTML = "<li>No weak areas detected.</li>";
+                return;
+            }
+
+            // Loop through each recommended quiz
+            data.weak_areas_quizzes.forEach((quiz_id, index) => {
+                let listItem = document.createElement("li");
+                listItem.textContent = `Quiz ID: ${quiz_id} - Topic: ${data.weak_topics[index]}`;
+                weakList.appendChild(listItem);
+            });
+        })
+        .catch(error => console.error("Error fetching recommendations:", error));
+});
+
+
+</script>
+
+
 {% endblock %}
