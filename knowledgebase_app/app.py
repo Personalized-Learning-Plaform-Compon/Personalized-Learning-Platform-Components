@@ -714,7 +714,7 @@ def quiz():
     return render_template('quiz.html')  
 
 @app.route('/milestones/<int:student_id>/<int:course_id>')
-@login_required
+# @login_required
 def get_course_milestones(student_id, course_id):
     # Fetch total quizzes in the course
     total_quizzes = db.session.query(Quizzes).filter(
@@ -722,13 +722,16 @@ def get_course_milestones(student_id, course_id):
     ).count()
 
     # Fetch completed quizzes in the course
-    completed_quizzes = db.session.query(Student_Progress).join(Quizzes, Student_Progress.quiz_id == Quizzes.quiz_id).filter(
-        Student_Progress.student_id == student_id,
-        Student_Progress.action == "complete",
-        Quizzes.courses_id == course_id
-    ).count()
+    from sqlalchemy import func, distinct
 
-    # Calculate completion percentage
+    completed_quizzes = db.session.query(func.count(distinct(Student_Progress.quiz_id))).join(Quizzes).filter(
+    Student_Progress.student_id == student_id,
+    Student_Progress.action == 'complete',
+    Quizzes.courses_id == course_id
+).scalar()
+
+    
+
     completion_percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
     
 
@@ -742,22 +745,22 @@ def get_course_milestones(student_id, course_id):
 
 
 
-@app.route('/strengths/weakness/<int:student_id>')
-def analyze_strengths_weaknesses(student_id):
+@app.route('/strengths/weakness/<int:user_id>')
+def analyze_strengths_weaknesses(user_id):
     results = (
         db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
-        .filter(Student_Progress.student_id == student_id)
+        .filter(Student_Progress.student_id == user_id)
         .group_by(Student_Progress.topic)
         .all()
     )
     strengths = [topic for topic, avg_score in results if avg_score >= 75]
     weaknesses = [topic for topic, avg_score in results if avg_score < 75]
 
-    return {"strengths/weaknesses": "strengths/weaknesses", "student_id": student_id, "strengths": strengths, "weaknesses": weaknesses}
+    return {"strengths/weaknesses": "strengths/weaknesses", "student_id": user_id, "strengths": strengths, "weaknesses": weaknesses}
 
-@app.route('/recommendations/<int:student_id>')
-def recommend_content(student_id):
-    analysis = analyze_strengths_weaknesses(student_id)
+@app.route('/recommendations/<int:user_id>')
+def recommend_content(user_id):
+    analysis = analyze_strengths_weaknesses(user_id)
     strengths = analysis['strengths']
     weaknesses = analysis['weaknesses']
 
@@ -776,7 +779,8 @@ def recommend_content(student_id):
         .limit(5)
         .all()
     )
-    return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": student_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
+    
+    return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": user_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
 
 @app.route('/balanced_recommendations/<int:student_id>')
 def balanced_recommendations(student_id):
