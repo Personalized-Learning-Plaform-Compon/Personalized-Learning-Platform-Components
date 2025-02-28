@@ -18,6 +18,6 @@
         });
 
         let data = await response.json();
-        document.getElementById("quizResults").innerText = data.quiz || "Error generating quiz.";
+        document.getElementById("quizResults").innerText = data.quiz_questions || "Error generating quiz.";
     }; 
 </script>

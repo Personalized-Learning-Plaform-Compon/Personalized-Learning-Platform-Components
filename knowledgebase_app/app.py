@@ -712,16 +712,24 @@ def generate_quiz(topic_text, num_questions=5):
 def generate_quiz_endpoint():
     data = request.get_json()
     topic = data.get("topic", "General Knowledge")
-    gradio_api_url = "http://127.0.0.1:7860/api/predict"
+    
+    # Use the Gradio API endpoint; note the trailing slash.
+    gradio_api_url = "http://127.0.0.1:7860/api/predict/"
     payload = {"data": [topic]}
     
-    # Make the POST request to the Gradio API
-    response = requests.post(gradio_api_url, json=payload)
-    print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging
-
-    # Retrieve quiz questions from the response JSON
-    quiz_questions = response.json().get("data", [])
-    return jsonify({"quiz_questions": quiz_questions})
+    try:
+        response = requests.post(gradio_api_url, json=payload)
+        print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging
+        
+        if response.status_code == 200:
+            # The Gradio endpoint returns a JSON with a "data" field.
+            quiz_questions = response.json().get("data", [])
+            return jsonify({"quiz_questions": quiz_questions})
+        else:
+            return jsonify({"error": "Quiz generation failed", "details": response.text}), 500
+    except Exception as e:
+        print(f"Error during quiz generation: {e}")
+        return jsonify({"error": "An error occurred", "details": str(e)}), 500
 
 
 
