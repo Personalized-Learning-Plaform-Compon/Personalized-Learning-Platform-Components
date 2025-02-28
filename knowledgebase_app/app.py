@@ -714,7 +714,7 @@ def generate_quiz_endpoint():
     topic = data.get("topic", "General Knowledge")
     
     # Use the Gradio API endpoint; note the trailing slash.
-    gradio_api_url = "http://127.0.0.1:7860/api/predict/"
+    gradio_api_url = "http://127.0.0.1:7860/api/predict"
     payload = {"data": [topic]}
     
     try:
