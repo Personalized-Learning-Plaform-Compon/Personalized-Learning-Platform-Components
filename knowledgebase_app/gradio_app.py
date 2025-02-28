@@ -3,7 +3,6 @@ import gradio as gr
 
 def predict_quiz(topic):
     # For demonstration, generate a list of quiz questions.
-    # Replace this with your actual model call or logic.
     questions = [f"Question {i+1} for '{topic}': What is ... ?" for i in range(5)]
     return questions
 
@@ -12,9 +11,9 @@ iface = gr.Interface(
     inputs="text",
     outputs="json",
     title="Quiz Generator",
-    description="Generates quiz questions based on the given topic."
+    description="Generates quiz questions based on the given topic.",
+    enable_api=True  # Ensure the API is enabled
 )
 
 if __name__ == "__main__":
-    # Launch the Gradio server on localhost at port 7860.
     iface.launch(server_name="127.0.0.1", server_port=7860)
