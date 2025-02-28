@@ -12,6 +12,7 @@
         <div class="course-card">
           <h3>{{ course.name }}</h3>
           <p>Taught by: <em>{{ teacher.name }}</em></p>
+          <a href="{{ url_for('course_page', course_id=course.id) }}" class="blue-btn">View Course</a>
           <div class="progress-section" id="milestone-container-{{ course.id }}">
             <div class="progress-bar">
               <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
