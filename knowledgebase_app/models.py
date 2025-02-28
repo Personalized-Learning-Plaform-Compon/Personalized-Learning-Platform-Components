@@ -40,6 +40,7 @@ class Students(db.Model):
     strengths = db.Column(db.JSON, default={})
     weaknesses = db.Column(db.JSON, default={})
     learning_style = db.Column(db.JSON, default={})
+    learning_pace = db.Column(db.JSON, default={})
     user = db.relationship('User', backref=db.backref('students', lazy=True))
 
 class Teachers(db.Model):
@@ -56,6 +57,7 @@ class Courses(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
+
 class CourseEnrollment(db.Model):
     __tablename__ = 'course_enrollment'
 
@@ -110,7 +112,9 @@ class CourseContent(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
     category = db.Column(db.String(255), nullable=True)
     
+    
     course = db.relationship('Courses', backref=db.backref('content', lazy=True))
     folder = db.relationship('Folder', backref=db.backref('files', lazy=True))
 
+    file_extension = db.Column(db.String(255), nullable=True)
 

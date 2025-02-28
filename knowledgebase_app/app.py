@@ -6,6 +6,7 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename, safe_join
 from flask_migrate import Migrate
+from sqlalchemy import func, distinct
 import openai 
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
@@ -809,12 +810,6 @@ def balanced_recommendations(student_id):
         "reinforcement quizzes": weak_quizzes,
         "advanced_engagement quizzes": strong_quizzes
     })
-
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
 
 
 if __name__ == "__main__":
