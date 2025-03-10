@@ -19,13 +19,15 @@
     <label for="file_name">Enter file name:</label>
     <input type="text" name="file_name" id="file_name" placeholder="Enter file name" required><br><br>
     
-    <label for="category">Select Content Type(s):</label>
-    <select name="category" id="category" multiple required>
-        <option value="visual">Visual (e.g., diagrams, videos)</option>
-        <option value="auditory">Auditory (e.g., podcasts, lectures)</option>
-        <option value="kinesthetic">Kinesthetic (e.g., interactive simulations)</option>
-        <option value="reading">Reading/Writing (e.g., articles, notes)</option>
-    </select><br><br>
+    <label for="category">Select Content Type(s):</label><br>
+    <input type="checkbox" name="category" value="visual" id="visual">
+    <label for="visual">Visual (e.g., diagrams, videos)</label><br>
+    <input type="checkbox" name="category" value="auditory" id="auditory">
+    <label for="auditory">Auditory (e.g., podcasts, lectures)</label><br>
+    <input type="checkbox" name="category" value="kinesthetic" id="kinesthetic">
+    <label for="kinesthetic">Kinesthetic (e.g., interactive simulations)</label><br>
+    <input type="checkbox" name="category" value="reading" id="reading">
+    <label for="reading">Reading/Writing (e.g., articles, notes)</label><br><br>
     
     <label for="folder">Select Folder:</label>
     <select name="folder_id" id="folder" required>
