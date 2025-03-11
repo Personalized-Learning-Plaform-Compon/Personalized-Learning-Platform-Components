@@ -10,6 +10,8 @@ import openai
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
 
+from generate_quiz import generate_quiz_from_openai
+
 # Automatically set FLASK_ENV to "development" if not explicitly set
 if os.getenv("FLASK_ENV") is None:
     os.environ["FLASK_ENV"] = "development"
@@ -687,49 +689,24 @@ def delete_folder():
     return redirect(url_for("manage_course", course_id=folder.course_id))
 
 
-def generate_quiz(topic_text, num_questions=5):
-    """Generate quiz questions from a given topic text using Huggingface API."""
-    quiz_questions = []
-
-# @app.route('/generate_quiz', methods=['POST'])
-# @login_required
-# def generate_quiz():
-#     data = request.get_json()
-#     topic = data.get("topic", "General Knowledge")
-
-#     gradio_api_url = "http://127.0.0.1:7860/api/predict"
-#     payload = {"data": [topic]}
-
-#     response = requests.post(gradio_api_url, json=payload)
-
-#     print(f"Gradio Response: {response.status_code}, {response.text}")  # Debugging line
-
-#     progress = response.json().get("data", [])
-#     return jsonify({"progress": progress})
-
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
 def generate_quiz_endpoint():
-    data = request.get_json()
-    topic = data.get("topic", "General Knowledge")
-    
-    # Update the URL to include a trailing slash
-    gradio_api_url = "http://127.0.0.1:7860/api/predict/"
-    payload = {"data": [topic]}
-    
-    try:
-        response = requests.post(gradio_api_url, json=payload)
-        print(f"Gradio Response: {response.status_code}, {response.text}")  # Debug line
+    # Get the topic from the request
+    request_body:dict = request.get_json()
+    quiz_topic:str = request_body.get("quiz_topic")
         
-        if response.status_code == 200:
-            # Extract the quiz questions from the JSON response
-            quiz_questions = response.json().get("data", [])
-            return jsonify({"quiz_questions": quiz_questions})
-        else:
-            return jsonify({"error": "Quiz generation failed", "details": response.text}), 500
-    except Exception as e:
-        print(f"Error during quiz generation: {e}")
-        return jsonify({"error": "An error occurred", "details": str(e)}), 500
+    if quiz_topic is None:
+        return jsonify({"error": "No quiz topic provided."})
+    
+    # Send a prompt with the topic included to OpenAI
+    quiz_questions = generate_quiz_from_openai(quiz_topic)
+    
+    # TODO: Comment out
+    print(f"{quiz_questions=}")
+    
+    # Return the questions as a JSON response to the user
+    return jsonify({"quiz_questions": quiz_questions})
 
 
 

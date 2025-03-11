@@ -1,23 +1,87 @@
+{% extends 'index.html' %}
+{% block content %}
+<title>Quiz Screen</title>
+
 <form id="quizForm">
     <label for="quizTopic">Enter Quiz Topic:</label>
     <input type="text" id="quizTopic" name="topic" required>
     <button type="submit">Generate Quiz</button>
 </form>
 
-<div id="quizResults"></div>
+<div id="quizResults">
+
+</div>
 
 <script>
     document.getElementById("quizForm").onsubmit = async function(e) {
         e.preventDefault();
-        let topic = document.getElementById("quizTopic").value;
+        document.getElementById("quizResults").removeChild(document.getElementById("quizResults").firstChild);
+        const topic = document.getElementById("quizTopic").value;
 
-        let response = await fetch("/generate_quiz", {
+        const response = await fetch("/generate_quiz", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic: topic })
+            body: JSON.stringify({ "quiz_topic": topic })
         });
+        
+        const data = await response.json();
 
-        let data = await response.json();
-        document.getElementById("quizResults").innerText = data.quiz_questions || "Error generating quiz.";
+        // Log API response data to console (NEED TO REMOVE)
+        console.log(`[QUIZFORM] data = ${JSON.stringify(data)}`);
+
+        if (data.error) {
+            document.getElementById("quizResults").innerText = data.error;
+            return;
+        }
+
+        // Generate quiz questions HTML
+        const new_ul = document.createElement("ul");
+        for (let index = 0; index < data.quiz_questions.length; index++) {
+            const question_data = data.quiz_questions[index];
+
+            // Create new list item to hold all question content
+            const new_li = document.createElement("li");
+
+            // Create new div to hold question and answer choices
+            const new_div = document.createElement("div");
+
+            // Question
+            const new_p = document.createElement("p");
+            new_p.innerText = question_data.question;
+            new_div.appendChild(new_p);
+
+            // Choices
+            const new_form = document.createElement("form");
+            const input_form_name_for_choices = `question_${index}`;
+
+            for (let choice_index = 0; choice_index < question_data.choices.length; choice_index++) {
+                const choice = question_data.choices[choice_index];
+
+                const new_input = document.createElement("input");
+                new_input.type = "radio";
+                new_input.id = `choice${choice_index}`;
+                new_input.name = input_form_name_for_choices;
+                new_input.value = choice_index;
+                
+                const new_label = document.createElement("label");
+                new_label.for = `choice${choice_index}`;
+                new_label.innerText = choice;
+
+                new_input.innerText = choice;
+                new_form.appendChild(new_input);
+                new_form.appendChild(new_label);
+                new_form.appendChild(document.createElement("br"));
+            }
+
+            new_div.appendChild(new_form);
+
+            new_li.appendChild(new_div);
+
+            new_ul.appendChild(new_li);
+        }
+
+        document.getElementById("quizResults").appendChild(new_ul);
     }; 
+
 </script>
+{% endblock %}
