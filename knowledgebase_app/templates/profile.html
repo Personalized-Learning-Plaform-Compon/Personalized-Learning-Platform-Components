@@ -44,7 +44,7 @@
 </form>
 {% endif %}
 
-{% if formatted_learning_methods %}
+{% if formatted_learning_methods and user.user_type == 'student' %}
 <div class="learning-methods">
     <h2>Recommended {{student.learning_style}} Learning Methods</h2>
     <p>{{ formatted_learning_methods | safe}}</p>
