@@ -13,32 +13,92 @@
 
 <!-- Upload New Content -->
 <h2>Upload New Content</h2>
-<form action="{{ url_for('upload_content', course_id=course.id) }}" method="POST" enctype="multipart/form-data">
-    <label for="file">Choose File:</label>
-    <input type="file" name="file" id="file" required><br><br>
-    <label for="file_name">Enter file name:</label>
-    <input type="text" name="file_name" id="file_name" placeholder="Enter file name" required><br><br>
-    
-    <label for="category">Select Content Type(s):</label><br>
-    <input type="checkbox" name="category" value="visual" id="visual">
-    <label for="visual">Visual (e.g., diagrams, videos)</label><br>
-    <input type="checkbox" name="category" value="auditory" id="auditory">
-    <label for="auditory">Auditory (e.g., podcasts, lectures)</label><br>
-    <input type="checkbox" name="category" value="kinesthetic" id="kinesthetic">
-    <label for="kinesthetic">Kinesthetic (e.g., interactive simulations)</label><br>
-    <input type="checkbox" name="category" value="reading" id="reading">
-    <label for="reading">Reading/Writing (e.g., articles, notes)</label><br><br>
-    
-    <label for="folder">Select Folder:</label>
-    <select name="folder_id" id="folder" required>
-        <option value="">Select Folder</option>
-        {% for folder in course.folders %}
-            <option value="{{ folder.id }}">{{ folder.name }}</option>
-        {% endfor %}
-    </select>
 
-    <button class="red-btn" type="submit">Upload File</button>
-</form>
+<!-- Selection for File Upload or YouTube Link -->
+<label for="upload_type">Select Upload Type:</label>
+<select id="upload_type" name="upload_type" onchange="toggleUploadType()">
+    <option value="file">Upload a File</option>
+    <option value="youtube">Add YouTube Video</option>
+</select><br><br>
+
+<div id="file_upload_section">
+    <form action="{{ url_for('upload_content', course_id=course.id) }}" method="POST" enctype="multipart/form-data">
+        <label for="file">Choose File (pdf, txt, doc, docx):</label>
+        <input type="file" name="file" id="file"><br><br>
+        
+        <label for="file_name">Enter file name:</label>
+        <input type="text" name="file_name" id="file_name" placeholder="Enter file name" required><br><br>
+        
+        <!-- Content Type Selection (Same as in file upload) -->
+        <label for="category">Select Content Type(s):</label><br>
+        <input type="checkbox" name="category" value="visual" id="visual_y">
+        <label for="visual_y">Visual (e.g., diagrams, videos)</label><br>
+        <input type="checkbox" name="category" value="auditory" id="auditory_y">
+        <label for="auditory_y">Auditory (e.g., podcasts, lectures)</label><br>
+        <input type="checkbox" name="category" value="kinesthetic" id="kinesthetic_y">
+        <label for="kinesthetic_y">Kinesthetic (e.g., interactive simulations)</label><br>
+        <input type="checkbox" name="category" value="reading" id="reading_y">
+        <label for="reading_y">Reading/Writing (e.g., articles, notes)</label><br><br>
+
+        <label for="folder">Select Folder:</label>
+        <select name="folder_id" id="folder" required>
+            <option value="">Select Folder</option>
+            {% for folder in course.folders %}
+                <option value="{{ folder.id }}">{{ folder.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="red-btn" type="submit">Upload File</button>
+    </form>
+</div>
+
+<!-- YouTube Link Form -->
+<div id="youtube_upload_section" style="display: none;">
+    <form action="{{ url_for('upload_youtube', course_id=course.id) }}" method="POST">
+        <label for="youtube_url">Enter YouTube URL:</label>
+        <input type="url" name="youtube_url" id="youtube_url" placeholder="e.g., https://www.youtube.com/watch?v=example" required><br><br>
+
+        <label for="youtube_title">Enter video title:</label>
+        <input type="text" name="youtube_title" id="youtube_title" placeholder="Enter video title" required><br><br>
+
+        <label for="category">Select Content Type(s):</label><br>
+        <input type="checkbox" name="category" value="visual" id="visual">
+        <label for="visual">Visual (e.g., diagrams, videos)</label><br>
+        <input type="checkbox" name="category" value="auditory" id="auditory">
+        <label for="auditory">Auditory (e.g., podcasts, lectures)</label><br>
+        <input type="checkbox" name="category" value="kinesthetic" id="kinesthetic">
+        <label for="kinesthetic">Kinesthetic (e.g., interactive simulations)</label><br>
+        <input type="checkbox" name="category" value="reading" id="reading">
+        <label for="reading">Reading/Writing (e.g., articles, notes)</label><br><br>
+
+        <label for="youtube_folder">Select Folder:</label>
+        <select name="folder_id" id="youtube_folder" required>
+            <option value="">Select Folder</option>
+            {% for folder in course.folders %}
+                <option value="{{ folder.id }}">{{ folder.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="red-btn" type="submit">Add YouTube Video</button>
+    </form>
+</div>
+
+<!-- JavaScript to Toggle Forms -->
+<script>
+    function toggleUploadType() {
+        var uploadType = document.getElementById("upload_type").value;
+        var fileSection = document.getElementById("file_upload_section");
+        var youtubeSection = document.getElementById("youtube_upload_section");
+    
+        if (uploadType === "file") {
+            fileSection.style.display = "block";
+            youtubeSection.style.display = "none";
+        } else {
+            fileSection.style.display = "none";
+            youtubeSection.style.display = "block";
+        }
+    }
+</script>
 
 <!-- Display Folders -->
 <h2>Folders</h2>

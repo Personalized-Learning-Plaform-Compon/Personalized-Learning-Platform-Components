@@ -511,42 +511,113 @@ def upload_content(course_id):
 
     return redirect(url_for('manage_course', course_id=course_id))
 
-@app.route('/view_pdf/<int:course_id>/<folder_name>/<filename>/<file_extension>')
+@app.route('/upload_youtube/<int:course_id>', methods=['POST'])
 @login_required
-def view_pdf(course_id, folder_name, filename, file_extension):
-    if file_extension.lower() != "pdf":
-        flash("Only PDF files can be viewed.", "warning")
-        return redirect(url_for('profile'))
+def upload_youtube(course_id):
+    youtube_url = request.form.get('youtube_url')
+    youtube_title = request.form.get('youtube_title')
+    folder_id = request.form.get('folder_id')
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    categories = request.form.getlist('category')
 
-    # Construct the file path
+    if not youtube_url or not youtube_title:
+        flash("Please provide both a YouTube URL and a title.", "danger")
+        return redirect(url_for('manage_course', course_id=course_id))
+
+    youtube_id = extract_youtube_id(youtube_url)
+    if not youtube_id:
+        flash("Invalid YouTube URL.", "danger")
+        return redirect(url_for('manage_course', course_id=course_id))
+
+    # Save YouTube link as a 'course_content' entry with 'youtube' extension
+    new_content = CourseContent(
+        filename=youtube_title,
+        file_url=f"https://www.youtube.com/embed/{youtube_id}",
+        file_extension="youtube",
+        course_id=course_id,
+        folder_id=folder_id,
+        teacher_id=teacher.id,
+        category=",".join(categories)
+    )
+    db.session.add(new_content)
+    db.session.commit()
+
+    flash("YouTube video added successfully!", "success")
+    return redirect(url_for('manage_course', course_id=course_id))
+
+@app.route('/view_file/<int:course_id>/<folder_name>/<filename>/<file_extension>')
+@login_required
+def view_file(course_id, folder_name, filename, file_extension):
+    file_extension = file_extension.lower()
+
+    # Check if the file is a YouTube video
+    if file_extension == "youtube":
+        # Construct the YouTube video URL from the database
+        content = CourseContent.query.filter_by(course_id=course_id, filename=filename).first()
+        if not content:
+            flash("Video not found.", "danger")
+            return redirect(url_for('profile'))
+
+        return render_template('view_file.html', content=content, youtube=True)
+
+    # Otherwise, handle normal files (PDF, TXT, DOC, DOCX)
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+    stored_filename = (filename + '.' + file_extension).replace(' ', '_')
+    file_path = os.path.join(folder_path, stored_filename)
 
-    # Keep filename as it appears on site
-    original_filename = filename
-
-    # Get proper filename stored on device
-    filename = (filename + '.' + file_extension).replace(' ', '_')
-
-    file_path = os.path.join(folder_path, filename)
-
-    # Check if file exists
     if not os.path.exists(file_path):
         flash("File not found.", "danger")
         return redirect(url_for('profile'))
 
-    return render_template('view_pdf.html', pdf_url=url_for('serve_pdf', course_id=course_id, folder_name=folder_name, filename=filename), filename = original_filename)
+    # If it's a PDF or TXT, show it in the browser
+    if file_extension in ["pdf", "txt"]:
+        return render_template('view_file.html', file_url=url_for('serve_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension)
 
-@app.route('/serve_pdf/<int:course_id>/<folder_name>/<filename>')
+    # If it's a DOC/DOCX, provide a download link
+    elif file_extension in ["doc", "docx"]:
+        return render_template('view_file.html', file_url=url_for('download_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension)
+
+@app.route('/serve_file/<int:course_id>/<folder_name>/<filename>')
 @login_required
-def serve_pdf(course_id, folder_name, filename):
+def serve_file(course_id, folder_name, filename):
+    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+    file_path = os.path.join(folder_path, filename)
+
+    if not os.path.exists(file_path):
+        flash("File not found.", "danger")
+        return redirect(url_for('profile'))
+
+    # Get file extension
+    file_extension = filename.split('.')[-1].lower()
+
+    # Define MIME types
+    mimetypes_dict = {
+        "pdf": "application/pdf",
+        "txt": "text/plain",
+        "doc": "application/msword",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    }
+
+    mimetype = mimetypes_dict.get(file_extension, "application/octet-stream")
+
+    return send_file(file_path, mimetype=mimetype)
+
+@app.route('/download/<int:course_id>/<folder_name>/<filename>')
+@login_required
+def download_file(course_id, folder_name, filename):
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
     file_path = os.path.join(folder_path, filename)
 
     if os.path.exists(file_path):
-        return send_file(file_path, mimetype="application/pdf")
+        return send_file(file_path, as_attachment=True)
     else:
         flash("File not found.", "danger")
         return redirect(url_for('profile'))
+
+# Helper function to extract YouTube video ID
+def extract_youtube_id(url):
+    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", url)
+    return match.group(1) if match else None
 
 @app.route("/create_folder", methods=["POST"])
 @login_required

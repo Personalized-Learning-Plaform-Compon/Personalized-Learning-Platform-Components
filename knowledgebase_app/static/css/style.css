@@ -325,7 +325,7 @@ th {
   }
 
   /* PDF Viewer Container */
-.pdf-container {
+.file-container {
   width: 100%;
   height: 85vh; /* Reduce height slightly to show a gap */
   display: flex;
@@ -334,7 +334,7 @@ th {
 }
 
 /* Ensure iframe scales properly */
-.pdf-container iframe {
+.file-container iframe {
   width: 95%; /* Slight padding on the sides */
   height: 100%;
   border: none;
@@ -342,7 +342,7 @@ th {
 
 /* Adjust for smaller screens */
 @media (max-width: 768px) {
-  .pdf-container {
+  .file-container {
       height: 80vh; /* More pronounced gap on mobile */
   }
 }

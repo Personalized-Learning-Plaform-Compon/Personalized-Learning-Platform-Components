@@ -1,0 +1,20 @@
+{% extends "index.html" %}
+
+{% block content %}
+    <h1>{{ filename }}</h1>
+
+    {% if youtube %}
+    <div class="file-container">
+        <iframe src="{{ content.file_url }}" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    {% elif file_extension in ["doc", "docx"] %}
+        <p>This file cannot be previewed. Click to download:</p>
+        <a href="{{ file_url }}" class="blue-btn">Download {{ filename }}.{{ file_extension }}</a>
+
+    {% elif file_extension in ["pdf", "txt"] %}
+    <div class="file-container">
+        <iframe src="{{ file_url }}"></iframe>
+    </div>
+    {% endif %}
+{% endblock %}
