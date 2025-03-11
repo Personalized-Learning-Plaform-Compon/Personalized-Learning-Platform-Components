@@ -88,7 +88,7 @@ class Student_Progress(db.Model):
     time_spent = db.Column(db.Integer, nullable=False)
     action = db.Column(db.String(255)) #complete, review, start
     attempt_date = db.Column(db.DateTime, nullable=False)
-    quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy=True) )
+    quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy='joined') )
     
 
 class Folder(db.Model):

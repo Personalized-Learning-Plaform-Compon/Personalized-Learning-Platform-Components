@@ -761,27 +761,42 @@ def analyze_strengths_weaknesses(user_id):
 
 @app.route('/recommendations/<int:user_id>')
 def recommend_content(user_id):
+    from sqlalchemy.orm import aliased
+
     analysis = analyze_strengths_weaknesses(user_id)
     strengths = analysis['strengths']
     weaknesses = analysis['weaknesses']
 
-    # Recommend for weaknesses
+    QuizAlias = aliased(Quizzes)
+    
+    # Recommend quizzes for weaknesses (Only quizzes the student hasn't scored well on)
     weak_recommendations = (
-        db.session.query(Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
-        .filter(Quizzes.topic.in_(weaknesses), Quizzes.difficulty == 'Easy')
+        db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
+        .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
+        .filter(Student_Progress.student_id == user_id)
+        .filter(QuizAlias.topic.in_(weaknesses))
+        .distinct()
         .limit(5)
         .all()
     )
 
-    # Recommend for strengths
+    # Recommend advanced quizzes for strengths (Only quizzes matching strong topics)
     strong_recommendations = (
-        db.session.query(Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.format, Quizzes.content)
-        .filter(Quizzes.topic.in_(strengths), Quizzes.difficulty == 'Hard')
+        db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
+        .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
+        .filter(Student_Progress.student_id == user_id)
+        .filter(QuizAlias.topic.in_(strengths))
+        .distinct()
         .limit(5)
         .all()
     )
     
-    return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": user_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
+    return jsonify({
+        "student_id": user_id,
+        "weak_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in weak_recommendations],
+        "strong_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in strong_recommendations]
+    })
+    # return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": user_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
 
 @app.route('/balanced_recommendations/<int:student_id>')
 def balanced_recommendations(student_id):

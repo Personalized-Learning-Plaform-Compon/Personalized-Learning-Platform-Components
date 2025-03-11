@@ -139,15 +139,23 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 }
 </style>
+<div class="recommendations-container">
+    <h2>Personalized Content Recommendations</h2>
 
-<div class="container">
-    <h2>Recommended Quizzes</h2>
-    <div id="recommendations-container">
-        <h3>Weak Areas: </h3>
-        <ul id="weak-recommendations"></ul>
-        
-        <h3>Strong Areas: </h3>
-        <ul id="strong-recommendation"></ul>
+    <!-- Weak Areas Section -->
+    <div class="recommendation-section">
+        <h3>📉 Focus Areas for Improvement</h3>
+        <ul id="weak-recommendations" class="quiz-list">
+            <!-- Weak area quizzes will be inserted here -->
+        </ul>
+    </div>
+
+    <!-- Strong Areas Section -->
+    <div class="recommendation-section">
+        <h3>🚀 Advanced Challenges</h3>
+        <ul id="strong-recommendations" class="quiz-list">
+            <!-- Strong area quizzes will be inserted here -->
+        </ul>
     </div>
 </div>
 
@@ -156,25 +164,96 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch("/recommendations/{{ current_user.id }}")
         .then(response => response.json())
         .then(data => {
-            const weakList = document.getElementById("weak-recommendations");
-
-            // Clear the list first (in case of previous content)
-            weakList.innerHTML = "";
-
-            if (data.weak_areas_quizzes.length === 0) {
-                weakList.innerHTML = "<li>No weak areas detected.</li>";
-                return;
-            }
-
-            // Loop through each recommended quiz
-            data.weak_areas_quizzes.forEach((quiz_id, index) => {
-                let listItem = document.createElement("li");
-                listItem.textContent = `Quiz ID: ${quiz_id} - Topic: ${data.weak_topics[index]}`;
-                weakList.appendChild(listItem);
-            });
+            updateRecommendations("weak-recommendations", data.weak_areas_quizzes);
+            updateRecommendations("strong-recommendations", data.strong_areas_quizzes);
         })
         .catch(error => console.error("Error fetching recommendations:", error));
+
+    function updateRecommendations(containerId, quizzes) {
+        const list = document.getElementById(containerId);
+        list.innerHTML = quizzes.length ? "" : "<li>No recommendations available.</li>";
+
+        quizzes.forEach(quiz => {
+            let item = document.createElement("li");
+            item.innerHTML = `
+                <div class="quiz-card">
+                    <p><strong>Topic:</strong> ${quiz.topic}</p>
+                    <p><strong>Quiz ID:</strong> ${quiz.quiz_id}</p>
+                    <span class="difficulty-tag ${quiz.difficulty.toLowerCase()}">${quiz.difficulty}</span>
+                    <button class="start-quiz" onclick="startQuiz(${quiz.quiz_id})">Start Quiz</button>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
 });
+
+function startQuiz(quizId) {
+    window.location.href = `/quiz/${quizId}`;
+}
+</script>
+
+<style>
+.recommendations-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+}
+
+.recommendation-section {
+    background: #f8f8f8;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.quiz-list {
+    list-style: none;
+    padding: 0;
+}
+
+.quiz-card {
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid #ff5f57;
+    margin-bottom: 10px;
+}
+
+.difficulty-tag {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #fff;
+}
+
+.difficulty-tag.easy {
+    background-color: #4CAF50;
+}
+
+.difficulty-tag.hard {
+    background-color: #f44336;
+}
+.difficulty-tag.medium {
+    background-color:rgb(248, 158, 48);
+}
+.start-quiz {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.start-quiz:hover {
+    background-color: #0056b3;
+}
+</style>
+
 
 
 </script>
