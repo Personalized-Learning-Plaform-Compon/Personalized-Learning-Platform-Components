@@ -17,6 +17,11 @@
             <div class="progress-bar">
               <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
             </div>
+            <!-- Milestone Badge -->
+            <div class="milestone-badge" id="milestone-badge-{{ course.id }}"></div>
+
+            <!-- Star Rating -->
+            <div class="star-rating" id="star-rating-{{ course.id }}"></div>
             <p>
               <strong>Completed:</strong> 
               <span id="completed-quizzes-{{ course.id }}">0</span> / 
@@ -47,9 +52,32 @@ document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
             document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
             document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
-
             // Adjust progress bar width
             document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
+            let badgeEl = document.getElementById(`milestone-badge-${course.id}`);
+            let starEl = document.getElementById(`star-rating-${course.id}`);
+
+            if (data.completion_percentage >= 75) {
+            badgeEl.innerHTML = "🏆 Expert Badge";
+            badgeEl.classList.add("badge-gold");
+        } else if (data.completion_percentage >= 50) {
+            badgeEl.innerHTML = "🌟 Intermediate Badge";
+            badgeEl.classList.add("badge-silver");
+        } else if (data.completion_percentage >= 25) {
+            badgeEl.innerHTML = "🔰 Beginner Badge";
+            badgeEl.classList.add("badge-bronze");
+        } else {
+            badgeEl.innerHTML = "⚡ Keep Going!";
+        }
+        console.log(`Updated Badge for Course ${course.id}:`, badgeEl);
+        // Star Rating System
+        let stars = "";
+        let starCount = Math.floor(data.completion_percentage / 20);
+        for (let i = 0; i < 5; i++) {
+            stars += i < starCount ? "⭐" : "☆";
+        }
+        starEl.innerHTML = stars;
+        console.log(`Star Rating for Course ${course.id}: ${stars}`);
         })
         .catch(error => console.error("Error fetching milestone data:", error));
     {% endfor %}
@@ -63,7 +91,8 @@ document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
       document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
       document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
-    })
+    
+})
     .catch(error => console.error("Error fetching milestone data:", error));
   {% endfor %}
 });
@@ -88,6 +117,7 @@ document.addEventListener("DOMContentLoaded", function() {
 }
 
 .course-card {
+  position: relative;
   border: 1px solid #ddd;
   padding: 15px;
   border-radius: 10px;
@@ -138,6 +168,43 @@ document.addEventListener("DOMContentLoaded", function() {
     flex-direction: column;
   }
 }
+/* Milestone Badges */
+.milestone-badge {
+    position: absolute;  /* Place it relative to the course card */
+    top: 10px;          /* Distance from the top */
+    right: 10px;        /* Distance from the right */
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid black;
+    min-width: 80px;
+    text-align: center;
+    z-index: 1;  /* Ensure the badge appears above other elements */
+}
+
+}
+
+.badge-gold {
+    background-color: gold;
+    color: black;
+}
+
+.badge-silver {
+    background-color: silver;
+    color: black;
+}
+
+.badge-bronze {
+    background-color: #cd7f32;
+    color: white;
+}
+
+/* Star Rating */
+.star-rating {
+    font-size: 24px;
+    margin-top: 10px;
+    color: #FFD700;
 </style>
 <div class="recommendations-container">
     <h2>Personalized Content Recommendations</h2>

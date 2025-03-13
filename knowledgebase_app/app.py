@@ -851,9 +851,9 @@ def generate_quiz_endpoint():
 def quiz():
     return render_template('quiz.html')  
 
-@app.route('/milestones/<int:student_id>/<int:course_id>')
+@app.route('/milestones/<int:user_id>/<int:course_id>')
 # @login_required
-def get_course_milestones(student_id, course_id):
+def get_course_milestones(user_id, course_id):
     # Fetch total quizzes in the course
     total_quizzes = db.session.query(Quizzes).filter(
         Quizzes.courses_id == course_id
@@ -863,7 +863,7 @@ def get_course_milestones(student_id, course_id):
     from sqlalchemy import func, distinct
 
     completed_quizzes = db.session.query(func.count(distinct(Student_Progress.quiz_id))).join(Quizzes).filter(
-    Student_Progress.student_id == student_id,
+    Student_Progress.student_id == user_id,
     Student_Progress.action == 'complete',
     Quizzes.courses_id == course_id
 ).scalar()
@@ -874,7 +874,7 @@ def get_course_milestones(student_id, course_id):
     
 
     return jsonify({
-        "student_id": student_id,
+        "student_id": user_id,
         "course_id": course_id,
         "completed_quizzes": completed_quizzes,
         "total_quizzes": total_quizzes,
@@ -903,36 +903,75 @@ def recommend_content(user_id):
     analysis = analyze_strengths_weaknesses(user_id)
     strengths = analysis['strengths']
     weaknesses = analysis['weaknesses']
+   
 
-    QuizAlias = aliased(Quizzes)
-    
-    # Recommend quizzes for weaknesses (Only quizzes the student hasn't scored well on)
-    weak_recommendations = (
-        db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
-        .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
-        .filter(Student_Progress.student_id == user_id)
-        .filter(QuizAlias.topic.in_(weaknesses))
-        .distinct()
-        .limit(5)
-        .all()
-    )
+    # Query quizzes for weak areas
+    weak_recommendations = db.session.query(
+        Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Student_Progress.score
+    ).join(Student_Progress, Student_Progress.quiz_id == Quizzes.quiz_id).filter(
+        Quizzes.topic.in_(weaknesses),
+        Quizzes.difficulty.in_(['Easy', 'Medium'])  # Recommend easier quizzes for weak areas
+    ).all()
 
-    # Recommend advanced quizzes for strengths (Only quizzes matching strong topics)
-    strong_recommendations = (
-        db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
-        .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
-        .filter(Student_Progress.student_id == user_id)
-        .filter(QuizAlias.topic.in_(strengths))
-        .distinct()
-        .limit(5)
-        .all()
-    )
-    
+    # Query quizzes where the student scored high (e.g., above 80%)
+    strong_recommendations = db.session.query(
+        Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Student_Progress.score
+    ).join(Student_Progress, Student_Progress.quiz_id == Quizzes.quiz_id).filter(
+        Student_Progress.student_id == user_id,
+        Student_Progress.score > 75  # Threshold for strong performance
+    ).all()
+
+    # Separate quizzes into weak and strong areas
+    weak_areas_quizzes = []
+    strong_areas_quizzes = []
+
+    for quiz_id, topic, difficulty, score in weak_recommendations:
+        # If student scored high on a "weak topic," move it to strong area instead
+        if (quiz_id, topic, difficulty, score) in strong_recommendations:
+            strong_areas_quizzes.append({"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty})
+        else:
+            weak_areas_quizzes.append({"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty})
+
+    for quiz_id, topic, difficulty, score in strong_recommendations:
+        if {"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty} not in strong_areas_quizzes:
+            strong_areas_quizzes.append({"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty})
+
     return jsonify({
         "student_id": user_id,
-        "weak_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in weak_recommendations],
-        "strong_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in strong_recommendations]
+        "weak_areas_quizzes": weak_areas_quizzes,
+        "strong_areas_quizzes": strong_areas_quizzes
     })
+
+
+    # QuizAlias = aliased(Quizzes)
+    
+    # # Recommend quizzes for weaknesses (Only quizzes the student hasn't scored well on)
+    # weak_recommendations = (
+    #     db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
+    #     .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
+    #     .filter(Student_Progress.student_id == user_id)
+    #     .filter(QuizAlias.topic.in_(weaknesses))
+    #     .distinct()
+    #     .limit(5)
+    #     .all()
+    # )
+
+    # # Recommend advanced quizzes for strengths (Only quizzes matching strong topics)
+    # strong_recommendations = (
+    #     db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
+    #     .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
+    #     .filter(Student_Progress.student_id == user_id)
+    #     .filter(QuizAlias.topic.in_(strengths))
+    #     .distinct()
+    #     .limit(5)
+    #     .all()
+    # )
+    
+    # return jsonify({
+    #     "student_id": user_id,
+    #     "weak_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in weak_recommendations],
+    #     "strong_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in strong_recommendations]
+    # })
     # return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": user_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
 
 @app.route('/balanced_recommendations/<int:student_id>')
