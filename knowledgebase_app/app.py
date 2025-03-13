@@ -1,6 +1,7 @@
 import os
 import requests
 import re
+from io import BytesIO
 from flask import Flask, render_template, redirect, url_for, flash, session, jsonify, request, send_from_directory, send_file
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from dotenv import load_dotenv
@@ -42,9 +43,31 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 db.init_app(app)
 migrate = Migrate(app, db)
 openai_client = openai.OpenAI()
+
 # Flask-Login setup
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+
+# Function to create files storable into AI agent
+def create_file(openai_client, file_path):
+    if file_path.startswith("http://") or file_path.startswith("https://"):
+        # Download the file content from the URL
+        response = requests.get(file_path)
+        file_content = BytesIO(response.content)
+        file_name = file_path.split("/")[-1]
+        file_tuple = (file_name, file_content)
+        result = openai_client.files.create(
+            file=file_tuple,
+            purpose="assistants"
+        )
+    else:
+        # Handle local file path
+        with open(file_path, "rb") as file_content:
+            result = openai_client.files.create(
+                file=file_content,
+                purpose="assistants"
+            )
+    return result.id
 
 # User loader function
 @login_manager.user_loader
@@ -361,6 +384,12 @@ def my_courses():
         course_id = int(request.form.get('delete_course'))
         course = Courses.query.get(course_id)
         if course and course.teacher_id == teacher.id:
+
+            # Remove course vector store
+            openai_client.vector_stores.delete(
+                vector_store_id=course.vector_store_id
+            )
+
             # Delete the course and related enrollments
             CourseEnrollment.query.filter_by(course_id=course_id).delete()
             db.session.delete(course)
@@ -394,9 +423,14 @@ def add_course():
         if not course_name:
             flash("Course name cannot be empty.", "danger")
         else:
-            new_course = Courses(name=course_name, teacher_id=teacher.id)
+            # Create new vector store for new course
+            vector_store = openai_client.vector_stores.create(name=None)
+
+            # Add course to database
+            new_course = Courses(name=course_name, teacher_id=teacher.id, vector_store_id=vector_store.id)
             db.session.add(new_course)
             db.session.commit()
+
             flash("Course added successfully.", "success")
             return redirect(url_for('my_courses'))
 
@@ -494,6 +528,16 @@ def upload_content(course_id):
             content.file_url = file_path  # Update the file path if the file already exists
             content.category = content_types
         else:
+
+            # Save file into vector_store (used for AI tutor) if not existent
+            vector_store_id = db.session.get(Courses, course_id).vector_store_id
+            vector_store_file_id = create_file(openai_client, file_path)
+
+            result = openai_client.vector_stores.files.create(
+                vector_store_id=vector_store_id,
+                file_id=vector_store_file_id
+            )
+
             # If the file does not exist in the database, create a new entry
             content = CourseContent(
                 filename=file_name,
@@ -502,7 +546,8 @@ def upload_content(course_id):
                 folder_id=folder_id,
                 teacher_id=teacher.id,
                 category=content_types,
-                file_extension=file_extension
+                file_extension=file_extension,
+                vector_store_file_id=vector_store_file_id
             )
             db.session.add(content)
         db.session.commit()
@@ -721,6 +766,15 @@ def delete_file():
     db.session.delete(content)
     db.session.commit()
 
+    # Remove file from vector store
+    if content.vector_store_file_id:
+        openai_client.files.delete(content.vector_store_file_id)
+
+        openai_client.vector_stores.files.delete(
+            vector_store_id=course.vector_store_id,
+            file_id=content.vector_store_file_id
+        )
+
     flash("File deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=content.course_id))
 
@@ -747,6 +801,15 @@ def delete_folder():
         if os.path.exists(file.file_url):
             os.remove(file.file_url)  # Delete file from the file system
         db.session.delete(file)  # Delete file from the database
+        
+        # Delete files from vector store
+        if file.vector_store:
+            openai_client.files.delete(file.vector_store_file_id)
+
+            openai_client.vector_stores.files.delete(
+                vector_store_id=course.vector_store_id,
+                file_id=file.vector_store_file_id
+            )
 
     # Delete the folder itself
     db.session.delete(folder)

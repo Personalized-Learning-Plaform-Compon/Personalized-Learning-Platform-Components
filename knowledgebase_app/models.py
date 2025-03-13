@@ -57,6 +57,7 @@ class Courses(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
+    vector_store_id = db.Column(db.String(255), nullable=True)
 
 class CourseEnrollment(db.Model):
     __tablename__ = 'course_enrollment'
@@ -117,4 +118,5 @@ class CourseContent(db.Model):
     folder = db.relationship('Folder', backref=db.backref('files', lazy=True))
 
     file_extension = db.Column(db.String(255), nullable=True)
+    vector_store_file_id = db.Column(db.String(512), nullable=True)
 
