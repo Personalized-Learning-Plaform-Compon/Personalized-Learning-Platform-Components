@@ -5,54 +5,67 @@
 
 {% block content %}
 <title>User Profile</title>
-<h1>Welcome, {{ user.fname }} {{ user.lname }}!</h1>
-<div class="profile-container">
-    <p><strong>Email:</strong> {{ user.email }}</p>
-    <p><strong>School:</strong> {{ user.school }}</p>
-    <p><strong>User Type:</strong> {{ user.user_type }}</p>
-    <!--  Display if the user is a student -->
-    {% if user.user_type == 'student' %}
-    <p><strong>Learning Style:</strong> {{student.learning_style}}</p>
-    <p><strong>Learning Pace:</strong> {{student.learning_pace}}</p>
-    {% endif %}
+
+<div class="flex justify-center items-center mt-10 px-6">
+    <div class="bg-white shadow-lg rounded-lg p-10 w-full max-w-8xl">
+        <h1 class="text-4xl font-semibold text-gray-800 text-center mb-6">
+            Welcome, {{ user.fname }} {{ user.lname }}!
+        </h1>
+
+        <div class="grid grid-cols-2 gap-6 text-gray-700">
+            <div>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>School:</strong> {{ user.school }}</p>
+                <p><strong>User Type:</strong> {{ user.user_type }}</p>
+            </div>
+
+            {% if user.user_type == 'student' %}
+            <div>
+                <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
+                <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if user.user_type == 'student' %}
+        <!-- Learning Style Selection -->
+        <form method="POST" action="{{ url_for('update_learning_style') }}" class="mt-6">
+            {{ form.hidden_tag() }}
+            <label class="block text-gray-700 font-medium mb-1">Select Learning Style:</label>
+            {{ form.learning_style(class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none") }}
+
+            <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                Update Learning Style
+            </button>
+        </form>
+
+        <!-- Learning Pace Selection -->
+        <form method="POST" action="{{ url_for('update_learning_pace') }}" class="mt-6">
+            {{ form.hidden_tag() }}
+            <label class="block text-gray-700 font-medium mb-1">Select Learning Pace:</label>
+            {{ form.learning_pace(class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none") }}
+
+            <button type="submit" class="mt-4 w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-300">
+                Update Learning Pace
+            </button>
+        </form>
+        {% endif %}
+
+        {% if formatted_learning_methods and user.user_type == 'student' %}
+        <div class="mt-6 bg-gray-100 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold text-gray-800">Recommended {{ student.learning_style }} Learning Methods</h2>
+            <p class="text-gray-700 mt-2">{{ formatted_learning_methods | safe }}</p>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}" class="block text-center mt-6 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition duration-300">
+            Logout
+        </a>
+    </div>
 </div>
 
-
-<!-- Form to select learning style: Only shows for students -->
-{% if user.user_type == 'student' %}
-<form method="POST" action="{{ url_for('update_learning_style') }}" class="profile-form">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-        <label for="learning_style">Select Learning Style:</label>
-        {{ form.learning_style(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.submit(class="red-btn") }}
-    </div>
-</form>
-
-<!-- Form to select learning pace: Only shows for students -->
-<form method="POST" action="{{ url_for('update_learning_pace') }}" class="profile-form">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-        <label for="learning_pace">Select Learning Pace:</label>
-        {{ form.learning_pace(class="form-control") }}
-    </div>
-    <div class="form-group">
-        {{ form.submit(class="red-btn") }}
-    </div>
-</form>
-{% endif %}
-
-{% if formatted_learning_methods and user.user_type == 'student' %}
-<div class="learning-methods">
-    <h2>Recommended {{student.learning_style}} Learning Methods</h2>
-    <p>{{ formatted_learning_methods | safe}}</p>
-</div>
-{% endif %}
-
-<a href="{{ url_for('logout') }}" class="red-btn">Logout</a>
 {% endblock %}
+
 
 <!-- The profile.html template is a simple page that displays the user's username, email, and the date they joined the site. -->
 

@@ -586,6 +586,7 @@ def upload_youtube(course_id):
     )
     db.session.add(new_content)
     db.session.commit()
+    
 
     flash("YouTube video added successfully!", "success")
     return redirect(url_for('manage_course', course_id=course_id))
@@ -594,7 +595,7 @@ def upload_youtube(course_id):
 @login_required
 def view_file(course_id, folder_name, filename, file_extension):
     file_extension = file_extension.lower()
-
+    course = Courses.query.get(course_id)
     # Check if the file is a YouTube video
     if file_extension == "youtube":
         # Construct the YouTube video URL from the database
@@ -603,31 +604,30 @@ def view_file(course_id, folder_name, filename, file_extension):
             flash("Video not found.", "danger")
             return redirect(url_for('profile'))
 
-        return render_template('view_file.html', content=content, youtube=True)
+        return render_template('view_file.html', content=content, youtube=True, course=course, filename=filename)
 
     # Otherwise, handle normal files (PDF, TXT, DOC, DOCX)
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
     stored_filename = (filename + '.' + file_extension).replace(' ', '_')
     file_path = os.path.join(folder_path, stored_filename)
-
+    folder_id = Folder.query.filter_by(course_id=course_id, name=folder_name).first().id
     if not os.path.exists(file_path):
         flash("File not found.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('view_folder', folder_id=folder_id))
 
     # If it's a PDF or TXT, show it in the browser
     if file_extension in ["pdf", "txt"]:
-        return render_template('view_file.html', file_url=url_for('serve_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension)
+        return render_template('view_file.html', file_url=url_for('serve_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension, course=course)
 
     # If it's a DOC/DOCX, provide a download link
     elif file_extension in ["doc", "docx"]:
-        return render_template('view_file.html', file_url=url_for('download_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension)
+        return render_template('view_file.html', file_url=url_for('download_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension, course=course)
 
 @app.route('/serve_file/<int:course_id>/<folder_name>/<filename>')
 @login_required
 def serve_file(course_id, folder_name, filename):
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
     file_path = os.path.join(folder_path, filename)
-
     if not os.path.exists(file_path):
         flash("File not found.", "danger")
         return redirect(url_for('profile'))
@@ -652,7 +652,6 @@ def serve_file(course_id, folder_name, filename):
 def download_file(course_id, folder_name, filename):
     folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
     file_path = os.path.join(folder_path, filename)
-
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     else:

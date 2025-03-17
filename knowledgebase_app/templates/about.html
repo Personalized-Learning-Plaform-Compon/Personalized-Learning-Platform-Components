@@ -1,62 +1,56 @@
 {% extends 'index.html' %}
 
 {% block content %}
-<title>About</title>
-<div class="centered" id="aboutMeContainer">
-    <div class="person">
-        <div>
-            <img class ="aboutMeImage" id="yinka" src="{{ url_for('static', filename='images/yinka.jpg') }}" alt="Yinka">
+<!-- About Section -->
+<div class="max-w-6xl mx-auto px-6 py-12 text-center">
+
+    <!-- Title -->
+    <h1 class="text-4xl font-extrabold text-gray-800 mb-12">Meet the Team</h1>
+
+    <!-- Team Members -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+        
+        <!-- Team Member 1 -->
+        <div class="person bg-white p-6 rounded-lg shadow-lg text-center">
+            <img class="aboutMeImage w-32 h-32 rounded-full mx-auto mb-4" src="{{ url_for('static', filename='images/yinka.jpg') }}" alt="Yinka">
+            <p class="text-xl font-semibold">Oluwayimika Adeyemi</p>
+            <p class="text-gray-500">Major: Computer Science</p>
+            <p class="text-gray-500">From: Bowie, Maryland</p>
         </div>
-        <div>
-            <p>Name: Oluwayimika Adeyemi</p>
-            <p>Major: Computer Science</p>
-            <p>From: Bowie, Maryland</p>
+
+        <!-- Team Member 2 -->
+        <div class="person bg-white p-6 rounded-lg shadow-lg text-center">
+            <img class="aboutMeImage w-32 h-32 rounded-full mx-auto mb-4" src="{{ url_for('static', filename='images/devin.jpg') }}" alt="Devin">
+            <p class="text-xl font-semibold">Devin Griffin</p>
+            <p class="text-gray-500">Major: Computer Science</p>
+            <p class="text-gray-500">From: Sparta, New Jersey</p>
         </div>
+
+        <!-- Team Member 3 -->
+        <div class="person bg-white p-6 rounded-lg shadow-lg text-center">
+            <img class="aboutMeImage w-32 h-32 rounded-full mx-auto mb-4" src="{{ url_for('static', filename='images/jennai_photo.jpg') }}" alt="Jennai">
+            <p class="text-xl font-semibold">Jennai Jackson</p>
+            <p class="text-gray-500">Major: Computer Science</p>
+            <p class="text-gray-500">From: Rochester, New York</p>
+        </div>
+
+        <!-- Team Member 4 -->
+        <div class="person bg-white p-6 rounded-lg shadow-lg text-center">
+            <img class="aboutMeImage w-32 h-32 rounded-full mx-auto mb-4" src="{{ url_for('static', filename='images/morgan.jpg') }}" alt="Morgan">
+            <p class="text-xl font-semibold">Morgan Martin</p>
+            <p class="text-gray-500">Major: Computer Science</p>
+            <p class="text-gray-500">From: Atlanta, Georgia</p>
+        </div>
+
+        <!-- Team Member 5 -->
+        <div class="person bg-white p-6 rounded-lg shadow-lg text-center">
+            <img class="aboutMeImage w-32 h-32 rounded-full mx-auto mb-4" src="{{ url_for('static', filename='images/sariah_adams.jpg') }}" alt="Sariah">
+            <p class="text-xl font-semibold">Sariah Adams</p>
+            <p class="text-gray-500">Major: Computer Science</p>
+            <p class="text-gray-500">From: Columbus, Georgia</p>
+        </div>
+
     </div>
 
-    <div class="person">
-        <div>
-            <img class ="aboutMeImage" id="devin" src="{{ url_for('static', filename='images/devin.jpg') }}" alt="Devin">
-        </div>
-        <div>
-            <p>Name: Devin Griffin </p>
-            <p>Major: Computer Science</p>
-            <p>From: Sparta, New Jersey </p>
-        </div>
-    </div>
-
-    <div class="person">
-        <div>
-            <img class ="aboutMeImage" id="jennai" src="{{ url_for('static', filename='images/jennai_photo.jpg') }}" alt="Jennai">
-        </div>
-        <div>
-            <p>Name: Jennai Jackson</p>
-            <p>Major: Computer Science</p>
-            <p>From: Rochester, New York</p>
-        </div>
-    </div>
-
-    <div class="person">
-        <div>
-            <img class ="aboutMeImage" id="morgan" src="{{ url_for('static', filename='images/morgan.jpg') }}" alt="Morgan Headshot">
-        </div>
-        <div>
-            <p>Name: Morgan Martin</p>
-            <p>Major: Computer Science</p>
-            <p>From: Atlanta, Georgia</p>
-        </div>
-    </div>
-
-    <div class="person">
-        <div>
-            <img class ="aboutMeImage" id="sariah" src="{{ url_for('static', filename='images/sariah_adams.jpg') }}" alt="Sariah Headshot">
-        </div>
-        <div>
-            <p>Name: Sariah Adams</p>
-            <p>Major: Computer Science</p>
-            <p>From: Columbus, Georgia </p>
-        </div>
-    </div>
-    
 </div>
 {% endblock %}

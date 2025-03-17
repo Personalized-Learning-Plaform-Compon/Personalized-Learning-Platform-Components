@@ -1,44 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    </head>
-    <body>
-        <nav class="centered button" id="navbar">
-            <ul>
-                <!-- TO DO: Need to differentiate between what shows for teachers and students-->
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-6xl mx-auto px-10 py-4 flex justify-between items-center">
+            <a href="{{ url_for('home') }}" class="text-2xl font-bold">KnowledgeBase</a>
+            <ul class="flex space-x-6 text-lg">
                 {% if current_user.is_authenticated %}
-                    <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                    <li><a href="{{ url_for('profile') }}" class="hover:text-gray-300">Profile</a></li>
                     {% if current_user.user_type == "student" %}
-                        <li><a href="{{ url_for('survey') }}">Learning Style Quiz</a></li> <!-- TO DO: Learning style selection and quiz only needs to show for students -->
-                        <li><a href="{{ url_for('dashboard') }}">Student Dashboard</a></li>
-                        <li><a href="{{ url_for('quiz') }}"> Quiz</a></li>
+                        <li><a href="{{ url_for('survey') }}" class="hover:text-gray-300">Learning Quiz</a></li>
+                        <li><a href="{{ url_for('dashboard') }}" class="hover:text-gray-300">Dashboard</a></li>
+                        <li><a href="{{ url_for('quiz') }}" class="hover:text-gray-300">Quiz</a></li>
                     {% elif current_user.user_type == "teacher" %}
-                        <!-- TO DO: add teacher view dashboard-->
-                        <li><a href="{{ url_for('my_courses') }}">My Courses</a></li>
+                        <li><a href="{{ url_for('my_courses') }}" class="hover:text-gray-300">My Courses</a></li>
                     {% endif %}
                 {% else %}
-                    <li><a href="{{ url_for('login') }}">Login/Register</a></li>
+                    <li><a href="{{ url_for('login') }}" class="hover:text-gray-300">Login/Register</a></li>
                 {% endif %}
-                <li><a href="{{ url_for('home') }}">Home</a></li>
-                <li><a href="{{ url_for('about') }}">About Us</a></li>
+                <li><a href="{{ url_for('home') }}" class="hover:text-gray-300">Home</a></li>
+                <li><a href="{{ url_for('about') }}" class="hover:text-gray-300">About Us</a></li>
             </ul>
-        </nav>
-        
-        <!-- Flash messages -->
-        <div class="flash-messages">
-            {% with messages = get_flashed_messages(with_categories=True) %}
-                {% if messages %}
-                    <ul class="flashes">
-                        {% for category, message in messages %}
-                            <li class="message {{ category }}">{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endwith %}
         </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="max-w-4xl mx-auto mt-24 px-10">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-lg text-white text-lg text-center
+                        {% if category == 'success' %} bg-green-500 {% elif category == 'warning' %} bg-yellow-500 {% else %} bg-red-500 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Page Content -->
+    <div class="max-w-5xl mx-auto mt-6 px-10 text-center">
         {% block content %}
         {% endblock %}
-    </body>
+    </div>
+
+    <!-- Centered Image Styling -->
+    <style>
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 85%;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+
+</body>
 </html>
+
+

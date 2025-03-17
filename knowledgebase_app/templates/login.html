@@ -2,16 +2,34 @@
 
 {% block content %}
 <title>Login/Register</title>
-    <h1>Login</h1>
-    <div class="centered">
-        <form id="loginForm" method="POST" action="">
-            {{ form.hidden_tag() }}
-            {{ form.email.label }} {{ form.email }}
-            {{ form.password.label }} {{ form.password }}
-            {{ form.submit(class="red-btn")  }}
 
-            <a id="rgstr-btn" href="{{ url_for('register') }}">Sign Up</a>
+<div class="flex justify-center items-center h-screen">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
+        <h2 class="text-2xl font-semibold text-gray-800 text-center mb-6">Login</h2>
+
+        <form id="loginForm" method="POST" action="" class="space-y-4">
+            {{ form.hidden_tag() }}
+
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">{{ form.email.label }}</label>
+                {{ form.email(class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none") }}
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">{{ form.password.label }}</label>
+                {{ form.password(class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none") }}
+            </div>
+
+            <div class="flex justify-center">
+                {{ form.submit(class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 w-full transition duration-300") }}
+            </div>
         </form>
+
+        <p class="text-center text-gray-600 mt-4">Don't have an account? 
+            <a href="{{ url_for('register') }}" class="text-blue-600 hover:underline">Sign Up</a>
+        </p>
     </div>
-   
+</div>
+
 {% endblock %}
+

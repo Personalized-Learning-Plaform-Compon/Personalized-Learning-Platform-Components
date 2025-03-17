@@ -1,79 +1,82 @@
 {% extends 'index.html' %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learning Style Quiz</title>
-    <style>
-        /* body { font-family: Arial, sans-serif; margin: 20px; } */
-        .question { margin-bottom: 15px; }
-        .result { margin-top: 20px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <h2>What’s Your Learning Style?</h2>
-    <form id="quizForm">
-        <div id="questions"></div>
-        <button type="submit" class="red-btn">Submit</button>
-    </form>
-    <p class="result" id="result"></p>
+<title>Learning Style Quiz</title>
 
-    <script>
-        const questions = [
-            { question: "1. When learning something new, I prefer to:", options: ["Listen to explanations", "Look at diagrams or videos", "Try it out hands-on", "Read about it in a book or article"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "2. When trying to remember something, I usually:", options: ["Repeat it out loud", "Picture it in my mind", "Act it out or use gestures", "Write it down"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "3. In a classroom setting, I learn best when the teacher:", options: ["Speaks clearly and explains concepts aloud", "Uses images, charts, and videos", "Provides hands-on activities or experiments", "Gives notes and reading assignments"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "4. When following directions, I prefer to:", options: ["Have someone tell me the steps", "See a map or diagram", "Walk through it physically or try it myself", "Read step-by-step instructions"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "5. If I had to give a presentation, I would:", options: ["Focus on what I’m going to say and how I say it", "Use a lot of visuals (slides, images, charts)", "Include demonstrations or interactive elements", "Prepare detailed notes and handouts"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "6. How do you prefer to study for an exam?", options: ["Discuss the material with someone or listen to recordings", "Use diagrams, graphs, or color-coded notes", "Walk around while studying or use flashcards", "Rewrite notes and summarize material in my own words"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "7. If you are assembling a piece of furniture, you would rather:", options: ["Have someone explain how to do it", "Look at the pictures in the manual", "Just start building and figure it out as you go", "Read the instructions carefully before beginning"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "8. When working on a team project, I prefer to:", options: ["Discuss ideas out loud with my teammates", "Use charts, graphs, or slides to organize information", "Build models or physically interact with materials", "Write detailed plans and documentation"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "9. When relaxing, I enjoy:", options: ["Listening to music or podcasts", "Watching TV or looking at pictures", "Doing sports, yoga, or hands-on hobbies", "Reading a book or journaling"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
-            { question: "10. If I need to learn a new software program, I prefer to:", options: ["Listen to a tutorial or have someone explain it", "Watch video tutorials or follow diagrams", "Experiment and figure it out by trial and error", "Read the manual or written instructions"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] }
-        ];
+<div class="flex justify-center items-center min-h-screen">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl">
+        <h2 class="text-3xl font-semibold text-gray-800 text-center mb-6">
+            What’s Your Learning Style?
+        </h2>
 
-        function loadQuiz() {
-            const quizContainer = document.getElementById("questions");
-            questions.forEach((q, index) => {
-                let questionHTML = `<div class='question'><p>${q.question}</p>`;
-                q.options.forEach((option, i) => {
-                    questionHTML += `<input type='radio' name='q${index}' value='${q.styles[i]}' required> ${option}<br>`;
-                });
-                questionHTML += `</div>`;
-                quizContainer.innerHTML += questionHTML;
+        <form id="quizForm" class="space-y-4">
+            <div id="questions" class="space-y-4"></div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                Submit
+            </button>
+        </form>
+
+        <p class="result mt-6 text-lg font-semibold text-center text-gray-700" id="result"></p>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { question: "When learning something new, I prefer to:", options: ["Listen to explanations", "Look at diagrams or videos", "Try it out hands-on", "Read about it in a book or article"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "When trying to remember something, I usually:", options: ["Repeat it out loud", "Picture it in my mind", "Act it out or use gestures", "Write it down"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "In a classroom setting, I learn best when the teacher:", options: ["Speaks clearly and explains concepts aloud", "Uses images, charts, and videos", "Provides hands-on activities or experiments", "Gives notes and reading assignments"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "When following directions, I prefer to:", options: ["Have someone tell me the steps", "See a map or diagram", "Walk through it physically or try it myself", "Read step-by-step instructions"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "If I had to give a presentation, I would:", options: ["Focus on what I’m going to say and how I say it", "Use a lot of visuals (slides, images, charts)", "Include demonstrations or interactive elements", "Prepare detailed notes and handouts"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "How do you prefer to study for an exam?", options: ["Discuss the material with someone or listen to recordings", "Use diagrams, graphs, or color-coded notes", "Walk around while studying or use flashcards", "Rewrite notes and summarize material in my own words"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "If you are assembling a piece of furniture, you would rather:", options: ["Have someone explain how to do it", "Look at the pictures in the manual", "Just start building and figure it out as you go", "Read the instructions carefully before beginning"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "When working on a team project, I prefer to:", options: ["Discuss ideas out loud with my teammates", "Use charts, graphs, or slides to organize information", "Build models or physically interact with materials", "Write detailed plans and documentation"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "When relaxing, I enjoy:", options: ["Listening to music or podcasts", "Watching TV or looking at pictures", "Doing sports, yoga, or hands-on hobbies", "Reading a book or journaling"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] },
+        { question: "If I need to learn a new software program, I prefer to:", options: ["Listen to a tutorial or have someone explain it", "Watch video tutorials or follow diagrams", "Experiment and figure it out by trial and error", "Read the manual or written instructions"], styles: ["Auditory", "Visual", "Kinesthetic", "Reading/Writing"] }
+    ];
+
+    function loadQuiz() {
+        const quizContainer = document.getElementById("questions");
+        questions.forEach((q, index) => {
+            let questionHTML = `<div class='p-4 bg-gray-100 rounded-lg'>
+                <p class="font-medium text-gray-800">${q.question}</p>`;
+            q.options.forEach((option, i) => {
+                questionHTML += `
+                    <label class="flex items-center space-x-2 mt-2">
+                        <input type='radio' name='q${index}' value='${q.styles[i]}' required class="text-blue-500">
+                        <span class="text-gray-700">${option}</span>
+                    </label>`;
             });
-        }
+            questionHTML += `</div>`;
+            quizContainer.innerHTML += questionHTML;
+        });
+    }
 
-        document.getElementById("quizForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let scores = { "Auditory": 0, "Visual": 0, "Kinesthetic": 0, "Reading/Writing": 0 };
-            let allAnswered = true;
-            
-            questions.forEach((q, index) => {
-                let selectedOption = document.querySelector(`input[name='q${index}']:checked`);
-                if (selectedOption) {
-                    scores[selectedOption.value] += 1;
-                } else {
-                    allAnswered = false;
-                }
-            });
-            
-            if (!allAnswered) {
-                alert("Please answer all questions before submitting.");
-                return;
+    document.getElementById("quizForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        let scores = { "Auditory": 0, "Visual": 0, "Kinesthetic": 0, "Reading/Writing": 0 };
+        let allAnswered = true;
+
+        questions.forEach((q, index) => {
+            let selectedOption = document.querySelector(`input[name='q${index}']:checked`);
+            if (selectedOption) {
+                scores[selectedOption.value] += 1;
+            } else {
+                allAnswered = false;
             }
-            
-            let maxScore = Math.max(...Object.values(scores));
-            let dominantStyles = Object.keys(scores).filter(style => scores[style] === maxScore);
-            document.getElementById("result").innerText = "Your dominant learning style(s): " + dominantStyles.join(", ");
         });
 
-        window.onload = loadQuiz;
-    </script>
-</body>
-</html>
+        if (!allAnswered) {
+            alert("Please answer all questions before submitting.");
+            return;
+        }
+
+        let maxScore = Math.max(...Object.values(scores));
+        let dominantStyles = Object.keys(scores).filter(style => scores[style] === maxScore);
+        document.getElementById("result").innerText = "Your dominant learning style(s): " + dominantStyles.join(", ");
+    });
+
+    window.onload = loadQuiz;
+</script>
 
 {% endblock %}

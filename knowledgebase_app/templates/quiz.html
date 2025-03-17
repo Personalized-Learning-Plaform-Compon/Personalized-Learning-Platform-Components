@@ -1,87 +1,108 @@
 {% extends 'index.html' %}
+
 {% block content %}
 <title>Quiz Screen</title>
 
-<form id="quizForm">
-    <label for="quizTopic">Enter Quiz Topic:</label>
-    <input type="text" id="quizTopic" name="topic" required>
-    <button type="submit">Generate Quiz</button>
-</form>
+<div class="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg">
+    <h2 class="text-2xl font-bold text-center mb-4">Generate a Quiz</h2>
 
-<div id="quizResults">
+    <form id="quizForm" class="flex flex-col gap-4">
+        <label for="quizTopic" class="text-lg font-semibold">Enter Quiz Topic:</label>
+        <input type="text" id="quizTopic" name="topic" required 
+               class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+               placeholder="e.g., Machine Learning, Data Structures">
 
+        <button type="submit" 
+                class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+            Generate Quiz
+        </button>
+    </form>
+
+    <!-- Quiz Results Container -->
+    <div id="quizResults" class="mt-6 space-y-4"></div>
 </div>
 
 <script>
-    document.getElementById("quizForm").onsubmit = async function(e) {
-        e.preventDefault();
-        document.getElementById("quizResults").removeChild(document.getElementById("quizResults").firstChild);
-        const topic = document.getElementById("quizTopic").value;
+document.getElementById("quizForm").onsubmit = async function (e) {
+    e.preventDefault();
 
+    const quizResults = document.getElementById("quizResults");
+    quizResults.innerHTML = "<p class='text-gray-500'>Generating quiz...</p>";  // Show loading message
+
+    const topic = document.getElementById("quizTopic").value.trim();
+    if (!topic) {
+        quizResults.innerHTML = "<p class='text-red-500'>Please enter a valid quiz topic.</p>";
+        return;
+    }
+
+    try {
         const response = await fetch("/generate_quiz", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ "quiz_topic": topic })
         });
-        
+
         const data = await response.json();
 
-        // Log API response data to console (NEED TO REMOVE)
+        // Log API response data to console (REMOVE BEFORE DEPLOYMENT)
         console.log(`[QUIZFORM] data = ${JSON.stringify(data)}`);
 
         if (data.error) {
-            document.getElementById("quizResults").innerText = data.error;
+            quizResults.innerHTML = `<p class='text-red-500'>${data.error}</p>`;
             return;
         }
 
-        // Generate quiz questions HTML
-        const new_ul = document.createElement("ul");
-        for (let index = 0; index < data.quiz_questions.length; index++) {
-            const question_data = data.quiz_questions[index];
+        // Clear previous results and display new quiz
+        quizResults.innerHTML = "";
+        const quizList = document.createElement("ul");
+        quizList.classList.add("space-y-6");
 
-            // Create new list item to hold all question content
-            const new_li = document.createElement("li");
-
-            // Create new div to hold question and answer choices
-            const new_div = document.createElement("div");
+        data.quiz_questions.forEach((question_data, index) => {
+            const listItem = document.createElement("li");
+            listItem.classList.add("p-4", "border", "rounded-lg", "shadow-sm", "bg-gray-100");
 
             // Question
-            const new_p = document.createElement("p");
-            new_p.innerText = question_data.question;
-            new_div.appendChild(new_p);
+            const questionText = document.createElement("p");
+            questionText.classList.add("text-lg", "font-semibold", "mb-2");
+            questionText.innerText = `${index + 1}. ${question_data.question}`;
+            listItem.appendChild(questionText);
 
-            // Choices
-            const new_form = document.createElement("form");
-            const input_form_name_for_choices = `question_${index}`;
+            // Choices Form
+            const choicesForm = document.createElement("form");
+            choicesForm.classList.add("space-y-2");
+            const inputFormName = `question_${index}`;
 
-            for (let choice_index = 0; choice_index < question_data.choices.length; choice_index++) {
-                const choice = question_data.choices[choice_index];
+            question_data.choices.forEach((choice, choiceIndex) => {
+                const choiceContainer = document.createElement("div");
+                choiceContainer.classList.add("flex", "items-center", "gap-2");
 
-                const new_input = document.createElement("input");
-                new_input.type = "radio";
-                new_input.id = `choice${choice_index}`;
-                new_input.name = input_form_name_for_choices;
-                new_input.value = choice_index;
-                
-                const new_label = document.createElement("label");
-                new_label.for = `choice${choice_index}`;
-                new_label.innerText = choice;
+                const choiceInput = document.createElement("input");
+                choiceInput.type = "radio";
+                choiceInput.id = `choice_${index}_${choiceIndex}`;
+                choiceInput.name = inputFormName;
+                choiceInput.value = choiceIndex;
+                choiceInput.classList.add("cursor-pointer");
 
-                new_input.innerText = choice;
-                new_form.appendChild(new_input);
-                new_form.appendChild(new_label);
-                new_form.appendChild(document.createElement("br"));
-            }
+                const choiceLabel = document.createElement("label");
+                choiceLabel.htmlFor = `choice_${index}_${choiceIndex}`;
+                choiceLabel.innerText = choice;
+                choiceLabel.classList.add("cursor-pointer");
 
-            new_div.appendChild(new_form);
+                choiceContainer.appendChild(choiceInput);
+                choiceContainer.appendChild(choiceLabel);
+                choicesForm.appendChild(choiceContainer);
+            });
 
-            new_li.appendChild(new_div);
+            listItem.appendChild(choicesForm);
+            quizList.appendChild(listItem);
+        });
 
-            new_ul.appendChild(new_li);
-        }
-
-        document.getElementById("quizResults").appendChild(new_ul);
-    }; 
-
+        quizResults.appendChild(quizList);
+    } catch (error) {
+        console.error("Error fetching quiz:", error);
+        quizResults.innerHTML = "<p class='text-red-500'>An error occurred while generating the quiz.</p>";
+    }
+};
 </script>
+
 {% endblock %}
