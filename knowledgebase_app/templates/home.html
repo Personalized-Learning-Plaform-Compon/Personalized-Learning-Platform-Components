@@ -16,13 +16,14 @@
     <p id="siteDescription" class="text-lg text-gray-600 leading-relaxed">
         A personalized learning platform with adapted quizzes for students and course content management for instructors and program directors.
     </p>
-
+    {% if not current_user.is_authenticated %}
     <!-- Action Button -->
     <div class="mt-8">
         <a href="{{ url_for('login') }}" class="inline-block bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-all">
             Get Started
         </a>
     </div>
+    {% endif %}
 
 </div>
 
