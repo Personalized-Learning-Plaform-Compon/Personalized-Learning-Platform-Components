@@ -28,17 +28,81 @@
             <div class="flex flex-col items-center">
                 <div class="relative w-24 h-24">
                     <svg class="w-full h-full" viewBox="0 0 100 100">
-                        <circle class="text-gray-300" stroke-width="10" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"></circle>
-                        <circle class="text-blue-500" stroke-width="10" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"
-                                stroke-dasharray="251.2" stroke-dashoffset="{{ 251.2 - (course.progress if course.progress else 0) * 2.512 }}"
-                                stroke-linecap="round"></circle>
-                    </svg>
-                    <span class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-gray-800">
-                        {{ course.progress if course.progress else 0 }}%
-                    </span>
+                    <circle class="text-gray-300" stroke-width="10" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"></circle>
+            <!-- Dynamic Progress Circle -->
+            <circle id="progress-circle" class="text-blue-500" stroke-width="10" stroke="currentColor" fill="transparent" 
+                    r="40" cx="50" cy="50"
+                    stroke-dasharray="251.2"
+                    stroke-dashoffset="251.2"
+                    stroke-linecap="round"></circle>
+        </svg>
+        
+        <!-- Progress Percentage Display -->
+        <span id="progress-text" class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-gray-800">
+            0%
+        </span>
                 </div>
                 <p class="text-gray-700 mt-2">Course Progress</p>
+                <div class="mt-4 flex space-x-2">
+        <span id="milestone-25" class="badge hidden bg-gray-300 text-white px-2 py-1 rounded-full">🎖 25%</span>
+        <span id="milestone-50" class="badge hidden bg-blue-400 text-white px-2 py-1 rounded-full">🏅 50%</span>
+        <span id="milestone-75" class="badge hidden bg-green-500 text-white px-2 py-1 rounded-full">🌟 75%</span>
+        <span id="milestone-100" class="badge hidden bg-yellow-500 text-white px-2 py-1 rounded-full">🏆 100%</span>
+    </div>
+        <!-- Star Rating for Completion -->
+    <div class="mt-4 text-yellow-500 text-2xl">
+        <span id="star-1" class="hidden">⭐</span>
+        <span id="star-2" class="hidden">⭐</span>
+        <span id="star-3" class="hidden">⭐</span>
+        <span id="star-4" class="hidden">⭐</span>
+        <span id="star-5" class="hidden">⭐</span>
+    </div>
+
+
+
             </div>
+            <script>
+document.addEventListener("DOMContentLoaded", function() {
+    fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
+        .then(response => response.json())
+        .then(data => {
+            console.log("Fetched quiz progress:", data);
+
+            // Get progress elements
+            let progressCircle = document.getElementById("progress-circle");
+            let progressText = document.getElementById("progress-text");
+
+            // Ensure the percentage is between 0-100
+            let progress = Math.min(Math.max(data.completion_percentage, 0), 100);
+            
+            // Calculate stroke-dashoffset for circular progress
+            let dashOffset = 251.2 - (progress * 2.512);
+
+            // Update progress circle
+            progressCircle.style.strokeDashoffset = dashOffset;
+
+            // Update text inside the progress circle
+            progressText.innerText = progress + "%";
+
+            // Show Milestone Badges
+            if (progress >= 100) {
+                document.getElementById("milestone-100").classList.remove("hidden");
+            } else if (progress >= 75) {
+                document.getElementById("milestone-75").classList.remove("hidden");
+            } else if (progress >= 50) {
+                document.getElementById("milestone-50").classList.remove("hidden");
+            } else if (progress >= 25) {
+                document.getElementById("milestone-25").classList.remove("hidden");
+            }
+            // Star Rating System
+            let stars = Math.floor(progress / 20); // 1 star per 20% progress
+            for (let i = 1; i <= stars; i++) {
+                document.getElementById("star-" + i).classList.remove("hidden");
+            }
+        })
+        .catch(error => console.error("Error fetching quiz progress:", error));
+});
+</script>
 
             <!-- Course Overview -->
             <div class="bg-gray-100 p-4 rounded-lg">
@@ -91,18 +155,7 @@
   
   <script>
   document.addEventListener("DOMContentLoaded", function() {
-    {% for course in courses %}
-      fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
-          document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
-          document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
-          document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
-          
-        })
-        .catch(error => console.error("Error fetching milestone data:", error));
-    {% endfor %}
+    
 
 
     {% for course, teacher in courses %}
@@ -116,7 +169,7 @@
         document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
     
   })
-      .catch(error => console.error("Error fetching milestone data:", error));
+    .catch(error => console.error("Error fetching milestone data:", error));
     {% endfor %}
 
 
@@ -151,4 +204,142 @@
     window.location.href = `/quiz/${quizId}`;
   }
   </script>
+
+  <style>
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.course-card {
+  position: relative;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgb(190, 191, 243);
+  width: 300px;
+  text-align: center;
+}
+
+.progress-section {
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4CAF50;
+  width: 0%;
+  transition: width 0.5s ease-in-out;
+}
+
+.blue-btn, .red-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 10px 5px;
+  border-radius: 5px;
+  text-decoration: none;
+  color: white;
+}
+
+.blue-btn {
+  background-color: #007BFF;
+}
+
+.red-btn {
+  background-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .courses {
+    flex-direction: column;
+  }
+}
+
+.recommendations-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+}
+
+.recommendation-section {
+    background: #f8f8f8;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.quiz-list {
+    list-style: none;
+    padding: 0;
+}
+
+.quiz-card {
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid #ff5f57;
+    margin-bottom: 10px;
+}
+
+.difficulty-tag {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #fff;
+}
+
+.difficulty-tag.easy {
+    background-color: #4CAF50;
+}
+
+.difficulty-tag.hard {
+    background-color: #f44336;
+}
+.difficulty-tag.medium {
+    background-color:rgb(248, 158, 48);
+}
+.start-quiz {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.start-quiz:hover {
+    background-color: #0056b3;
+}
+
+.badge {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+</style>
 {% endblock %}
