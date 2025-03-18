@@ -100,32 +100,26 @@
           document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
           document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
           
-          let badgeEl = document.getElementById(`milestone-badge-{{ course.id }}`);
-          let starEl = document.getElementById(`star-rating-{{ course.id }}`);
-  
-          if (data.completion_percentage >= 75) {
-            badgeEl.innerHTML = "🏆 Expert Badge";
-            badgeEl.classList.add("badge-gold");
-          } else if (data.completion_percentage >= 50) {
-            badgeEl.innerHTML = "🌟 Intermediate Badge";
-            badgeEl.classList.add("badge-silver");
-          } else if (data.completion_percentage >= 25) {
-            badgeEl.innerHTML = "🔰 Beginner Badge";
-            badgeEl.classList.add("badge-bronze");
-          } else {
-            badgeEl.innerHTML = "⚡ Keep Going!";
-          }
-  
-          let stars = "";
-          let starCount = Math.floor(data.completion_percentage / 20);
-          for (let i = 0; i < 5; i++) {
-            stars += i < starCount ? "⭐" : "☆";
-          }
-          starEl.innerHTML = stars;
         })
         .catch(error => console.error("Error fetching milestone data:", error));
     {% endfor %}
-  
+
+
+    {% for course, teacher in courses %}
+    console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
+    fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
+        document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
+        document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
+        document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
+    
+  })
+      .catch(error => console.error("Error fetching milestone data:", error));
+    {% endfor %}
+
+
     fetch("/recommendations/{{ current_user.id }}")
       .then(response => response.json())
       .then(data => {
