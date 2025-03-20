@@ -73,15 +73,18 @@
 
     <!-- Input Section -->
     <div class="bg-white border-t p-4 flex items-center">
-        <input type="text" id="user-input" placeholder="Type your message..."
-            class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            autofocus>
+        <textarea id="user-input" placeholder="Type your message..."
+            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+            rows="1"></textarea>
         <button id="send-button" onclick="sendMessage()"
             class="ml-4 bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-2 rounded-full transition">
             Send
         </button>
     </div>
 </div>
+
+<!-- Back Button -->
+<button id="back-button" onclick="goBack()" class="inline-block bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition cursor-pointer mt-6 mb-6">Back to Course</button>
 
 <script>
     var socket = io();
@@ -90,6 +93,7 @@
     var learningStyle = "{{ student.learning_style }}";
     var learningPace = "{{ student.learning_pace }}";
     var vectorStoreId = "{{ course.vector_store_id }}";
+    
 
     function sendMessage() {
         let inputField = document.getElementById("user-input");
@@ -167,6 +171,32 @@
         // Focus input field for user convenience
         document.getElementById("user-input").focus();
     });
+
+    // Listen for Enter key press in the input field
+    document.getElementById("user-input").addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            if (event.shiftKey) {
+                // Insert a newline instead of sending the message
+                event.preventDefault();
+                let inputField = document.getElementById("user-input");
+                let cursorPos = inputField.selectionStart;
+                let textBefore = inputField.value.substring(0, cursorPos);
+                let textAfter = inputField.value.substring(cursorPos);
+
+                // Insert a newline at the cursor position
+                inputField.value = textBefore + "\n" + textAfter;
+                inputField.selectionStart = inputField.selectionEnd = cursorPos + 1;
+            } else {
+                // Send the message when Enter is pressed without Shift
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+    });
+
+    function goBack() {
+        window.history.back();
+    }
 </script>
 
 {% endblock %}
