@@ -1048,38 +1048,6 @@ def recommend_content(user_id):
         "strong_areas_quizzes": strong_areas_quizzes
     })
 
-
-    # QuizAlias = aliased(Quizzes)
-    
-    # # Recommend quizzes for weaknesses (Only quizzes the student hasn't scored well on)
-    # weak_recommendations = (
-    #     db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
-    #     .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
-    #     .filter(Student_Progress.student_id == user_id)
-    #     .filter(QuizAlias.topic.in_(weaknesses))
-    #     .distinct()
-    #     .limit(5)
-    #     .all()
-    # )
-
-    # # Recommend advanced quizzes for strengths (Only quizzes matching strong topics)
-    # strong_recommendations = (
-    #     db.session.query(QuizAlias.quiz_id, QuizAlias.topic, QuizAlias.difficulty)
-    #     .join(Student_Progress, QuizAlias.quiz_id == Student_Progress.quiz_id)
-    #     .filter(Student_Progress.student_id == user_id)
-    #     .filter(QuizAlias.topic.in_(strengths))
-    #     .distinct()
-    #     .limit(5)
-    #     .all()
-    # )
-    
-    # return jsonify({
-    #     "student_id": user_id,
-    #     "weak_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in weak_recommendations],
-    #     "strong_areas_quizzes": [{"quiz_id": r[0], "topic": r[1], "difficulty": r[2]} for r in strong_recommendations]
-    # })
-    # return jsonify({"recommendations": "recommendations", "weak_topics": [r[1] for r in weak_recommendations], "student": user_id, "weak_areas_quizzes": [r[0] for r in weak_recommendations], "strong_topics": [r[1] for r in strong_recommendations], "strong_areas_quizzes": [r[0] for r in strong_recommendations]})
-
 @app.route('/balanced_recommendations/<int:student_id>')
 def balanced_recommendations(student_id):
     weak_recommendations = db.session.query(
@@ -1107,6 +1075,38 @@ def balanced_recommendations(student_id):
         "reinforcement quizzes": weak_quizzes,
         "advanced_engagement quizzes": strong_quizzes
     })
+
+@app.route('/progress_data')
+@login_required
+def progress_data():
+    student = Students.query.filter_by(user_id=current_user.id).first()
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    courses = db.session.query(Courses, Teachers) \
+        .join(CourseEnrollment, Courses.id == CourseEnrollment.course_id) \
+        .join(Teachers) \
+        .filter(CourseEnrollment.student_id == student.id).all()
+
+    progress_info = []
+    for course, _ in courses:
+        total_quizzes = db.session.query(Quizzes) \
+            .filter(Quizzes.courses_id == course.id).count()
+        completed_quizzes = db.session.query(func.count(distinct(Student_Progress.quiz_id))) \
+            .join(Quizzes) \
+            .filter(
+                Student_Progress.student_id == student.id,
+                Student_Progress.action == 'complete',
+                Quizzes.courses_id == course.id
+            ).scalar()
+        percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
+        progress_info.append({
+            "course_name": course.name,
+            "completion_percentage": round(percentage, 2)
+        })
+
+    return jsonify(progress_info)
+
 
 
 if __name__ == "__main__":
