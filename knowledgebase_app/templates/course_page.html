@@ -141,13 +141,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     </a>
                 </div>
             </div>
-
-            <!-- Back to Dashboard Button -->
-            <div class="text-center">
-                <a href="{{ url_for('dashboard') }}" class="inline-block bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition">
-                    Back to Dashboard
-                </a>
-            </div>
         </div>
     </div>
 </div>
@@ -354,9 +347,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 </style>
+
+<a href="{{ url_for('dashboard') }}" class="inline-block bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition mb-6">
+    Back to Dashboard
+</a>
 </div>
 
 
 
-<a href="{{ url_for('dashboard') }}" class="blue-btn">Back to Dashboard</a>
 {% endblock %}
