@@ -16,6 +16,7 @@ import openai
 from openai import OpenAI
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
+from supabase import create_client, Client
 
 from generate_quiz import generate_quiz_from_openai
 
@@ -38,6 +39,11 @@ else:
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -501,77 +507,97 @@ def upload_content(course_id):
     folder_id = request.form.get("folder_id")
     teacher = Teachers.query.filter_by(user_id=current_user.id).first()
     content_types = ','.join(request.form.getlist('category'))
-    file_extension = file.filename.rsplit('.', 1)[1].lower()
 
-    if file.filename == "":
+    if not file or file.filename == "":
         flash("No selected file", "danger")
         return redirect(url_for('manage_course', course_id=course_id))
 
-    if file and allowed_file(file.filename):
+    if not allowed_file(file.filename):
+        flash("File type not allowed.", "danger")
+        return redirect(url_for('manage_course', course_id=course_id))
 
-        # If a folder is selected, get the folder name from the database
-        if folder_id:
-            folder = Folder.query.get(folder_id)
-            if folder and folder.course_id == course_id:
-                folder_name = folder.name
+    file_extension = file.filename.rsplit('.', 1)[1].lower()
+    bucket_name = "course-content"
 
-                # Add file path with new file name + original file extension
-                file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name, secure_filename(file_name + '.' + file_extension))
-            else:
-                flash("Invalid folder selected.", "danger")
-                return redirect(url_for('manage_course', course_id=course_id))
-        else:
-            flash("No folder selected.", "danger")
+    # Ensure folder exists
+    if not folder_id:
+        flash("No folder selected.", "danger")
+        return redirect(url_for('manage_course', course_id=course_id))
+
+    folder = Folder.query.get(folder_id)
+    if not folder or folder.course_id != course_id:
+        flash("Invalid folder selected.", "danger")
+        return redirect(url_for('manage_course', course_id=course_id))
+
+    folder_name = folder.name
+
+    # Define paths
+    local_folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
+    local_file_path = os.path.join(local_folder_path, secure_filename(file_name + '.' + file_extension))
+    supabase_file_path = f"course_{course_id}/{folder_name}/{file_name}.{file_extension}"
+
+    try:
+        # Ensure local folder exists
+        os.makedirs(local_folder_path, exist_ok=True)
+
+        # Save locally first
+        file.save(local_file_path)
+
+        # Determine the MIME type based on the file extension
+        mime_types = {
+            "pdf": "application/pdf",
+            "txt": "text/plain",
+            "doc": "application/msword",
+            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
+        content_type = mime_types.get(file_extension, "application/octet-stream")
+
+        # Upload to Supabase
+        with open(local_file_path, "rb") as file_data:
+            res = supabase.storage.from_(bucket_name).upload(supabase_file_path, file_data, {'content-type': content_type})
+
+        if not res:
+            flash("Error uploading file to Supabase Storage.", "danger")
+            os.remove(local_file_path)  # Cleanup
             return redirect(url_for('manage_course', course_id=course_id))
 
-        # Check if the file already exists in the folder, and delete it if it does
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        # Get course vector store
+        course = db.session.get(Courses, course_id)
+        if not course or not course.vector_store_id:
+            flash("Error: Course not found or vector store not initialized.", "danger")
+            os.remove(local_file_path)
+            return redirect(url_for('manage_course', course_id=course_id))
 
-        # Create the folder if it doesn't exist
-        folder_path = os.path.dirname(file_path)
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+        vector_store_id = course.vector_store_id
 
-        # Save the new file
-        file.save(file_path)
-
-        # Save the file info in the database (replace the old entry if needed)
-        content = CourseContent.query.filter_by(course_id=course_id, folder_id=folder_id, filename=file_name).first()
-        if content:
-            content.file_url = file_path  # Update the file path if the file already exists
-            content.category = content_types
-        else:
-
-            # Save file into vector_store (used for AI tutor) if not existent
-            # Ensure course and vector store ID exist
-            course = db.session.get(Courses, course_id)
-            if not course or not course.vector_store_id:
-                flash("Error: Course not found or vector store not initialized.", "danger")
-                return redirect(url_for('manage_course', course_id=course_id))
-
-            vector_store_id = course.vector_store_id
-
-            try:
-                # Upload file to vector store
-                vector_store_file_id = create_file(openai_client, file_path)
-                if not vector_store_file_id:
-                    flash("Error uploading file to vector store.", "danger")
-                    return redirect(url_for('manage_course', course_id=course_id))
-
-                result = openai_client.vector_stores.files.create(
+        # Upload to Vector Store
+        try:
+            vector_store_file_id = create_file(openai_client, local_file_path)
+            if vector_store_file_id:
+                openai_client.vector_stores.files.create(
                     vector_store_id=vector_store_id,
                     file_id=vector_store_file_id
                 )
+            else:
+                flash("Error uploading file to vector store.", "danger")
+        except openai.OpenAIError as e:
+            flash(f"Vector store upload failed: {str(e)}", "danger")
 
-            except openai.OpenAIError as e:
-                flash(f"Vector store upload failed: {str(e)}", "danger")
-                return redirect(url_for('manage_course', course_id=course_id))
+        # Remove local file
+        os.remove(local_file_path)
 
-            # If the file does not exist in the database, create a new entry
+        # Save to Database
+        content = CourseContent.query.filter_by(
+            course_id=course_id, folder_id=folder_id, filename=file_name
+        ).first()
+
+        if content:
+            content.file_url = supabase_file_path
+            content.category = content_types
+        else:
             content = CourseContent(
                 filename=file_name,
-                file_url=file_path,
+                file_url=supabase_file_path,
                 course_id=course_id,
                 folder_id=folder_id,
                 teacher_id=teacher.id,
@@ -580,9 +606,12 @@ def upload_content(course_id):
                 vector_store_file_id=vector_store_file_id
             )
             db.session.add(content)
-        db.session.commit()
 
-        flash("File uploadeded successfully!", "success")
+        db.session.commit()
+        flash("File uploaded successfully!", "success")
+
+    except Exception as e:
+        flash(f"Unexpected error: {str(e)}", "danger")
 
     return redirect(url_for('manage_course', course_id=course_id))
 
@@ -621,72 +650,34 @@ def upload_youtube(course_id):
     flash("YouTube video added successfully!", "success")
     return redirect(url_for('manage_course', course_id=course_id))
 
-@app.route('/view_file/<int:course_id>/<folder_name>/<filename>/<file_extension>')
+@app.route('/view_file/<int:content_id>')
 @login_required
-def view_file(course_id, folder_name, filename, file_extension):
-    file_extension = file_extension.lower()
-    course = Courses.query.get(course_id)
-    # Check if the file is a YouTube video
-    if file_extension == "youtube":
-        # Construct the YouTube video URL from the database
-        content = CourseContent.query.filter_by(course_id=course_id, filename=filename).first()
-        if not content:
-            flash("Video not found.", "danger")
-            return redirect(url_for('profile'))
-
-        return render_template('view_file.html', content=content, youtube=True, course=course, filename=filename)
-
-    # Otherwise, handle normal files (PDF, TXT, DOC, DOCX)
-    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
-    stored_filename = (filename + '.' + file_extension).replace(' ', '_')
-    file_path = os.path.join(folder_path, stored_filename)
-    folder_id = Folder.query.filter_by(course_id=course_id, name=folder_name).first().id
-    if not os.path.exists(file_path):
-        flash("File not found.", "danger")
-        return redirect(url_for('view_folder', folder_id=folder_id))
-
-    # If it's a PDF or TXT, show it in the browser
-    if file_extension in ["pdf", "txt"]:
-        return render_template('view_file.html', file_url=url_for('serve_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension, course=course)
-
-    # If it's a DOC/DOCX, provide a download link
-    elif file_extension in ["doc", "docx"]:
-        return render_template('view_file.html', file_url=url_for('download_file', course_id=course_id, folder_name=folder_name, filename=stored_filename), filename=filename, file_extension=file_extension, course=course)
-
-@app.route('/serve_file/<int:course_id>/<folder_name>/<filename>')
-@login_required
-def serve_file(course_id, folder_name, filename):
-    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
-    file_path = os.path.join(folder_path, filename)
-    if not os.path.exists(file_path):
+def view_file(content_id):
+    content = CourseContent.query.get(content_id)
+    if not content:
         flash("File not found.", "danger")
         return redirect(url_for('profile'))
 
-    # Get file extension
-    file_extension = filename.split('.')[-1].lower()
+    # If it's a YouTube video, don't generate a signed URL
+    if content.file_extension == "youtube":
+        return render_template('view_file.html', 
+                               file_url=content.file_url, 
+                               file_extension=content.file_extension, 
+                               filename=content.filename, 
+                               youtube=True)  # Pass 'youtube' flag
 
-    # Define MIME types
-    mimetypes_dict = {
-        "pdf": "application/pdf",
-        "txt": "text/plain",
-        "doc": "application/msword",
-        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    }
+    bucket_name = "course-content"
+    file_path = content.file_url  # This is the stored file path in Supabase
 
-    mimetype = mimetypes_dict.get(file_extension, "application/octet-stream")
-
-    return send_file(file_path, mimetype=mimetype)
-
-@app.route('/download/<int:course_id>/<folder_name>/<filename>')
-@login_required
-def download_file(course_id, folder_name, filename):
-    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{course_id}", folder_name)
-    file_path = os.path.join(folder_path, filename)
-    if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
-    else:
-        flash("File not found.", "danger")
+    # Generate a signed URL (valid for 1 hour)
+    try:
+        signed_url_data = supabase.storage.from_(bucket_name).create_signed_url(file_path, 3600)
+        signed_url = signed_url_data.get('signedURL') or signed_url_data.get('signedUrl')  # Extract the actual URL
+    except Exception as e:
+        flash(f"Error generating file link: {str(e)}", "danger")
         return redirect(url_for('profile'))
+
+    return render_template('view_file.html', file_url=signed_url, file_extension=content.file_extension, filename=content.filename)
 
 # Helper function to extract YouTube video ID
 def extract_youtube_id(url):
@@ -718,13 +709,6 @@ def create_folder():
     db.session.add(new_folder)
     db.session.commit()
 
-    # Create folder in local storage
-    course_path = os.path.join(UPLOAD_FOLDER, f"course_{course_id}")
-    folder_path = os.path.join(course_path, folder_name)
-
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
     flash("Folder created successfully!", "success")
     return redirect(url_for("manage_course", course_id=course_id))
 
@@ -733,7 +717,7 @@ def create_folder():
 def view_folder(folder_id):
     folder = Folder.query.get_or_404(folder_id)
     course = Courses.query.get(folder.course_id)
-    content = course.content
+    content = CourseContent.query.filter_by(folder_id=folder.id).all()  # Fetch files
 
     # Check if the user has permission to access this folder
     if current_user.user_type == "teacher":
@@ -749,7 +733,8 @@ def view_folder(folder_id):
             flash("You do not have access to this folder.", "danger")
             return redirect(url_for("courses"))
 
-    return render_template("folder_page.html", folder=folder, course=course, user = current_user, content=content)
+    return render_template("folder_page.html", folder=folder, course=course, user=current_user, content=content)
+
 
 @app.route('/course/<int:course_id>/manage', methods=['GET', 'POST'])
 @login_required
@@ -786,28 +771,29 @@ def delete_file():
         flash("You do not have permission to delete this file.", "danger")
         return redirect(url_for("manage_course", course_id=content.course_id))
 
-    # Remove the file from the file system
-    file_path = content.file_url
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    # If it's not a YouTube video, delete it from cloud storage
+    if content.file_extension != "youtube":
+        bucket_name = "course-content"
+        try:
+            response = supabase.storage.from_(bucket_name).remove([content.file_url])
+        except Exception as e:
+            flash(f"Error deleting file from cloud storage: {str(e)}", "danger")
+            return redirect(url_for("manage_course", course_id=content.course_id))
+
+        # Remove file from vector store if applicable
+        if content.vector_store_file_id:
+            try:
+                openai_client.vector_stores.files.delete(
+                    vector_store_id=course.vector_store_id,
+                    file_id=content.vector_store_file_id
+                )
+                openai_client.files.delete(content.vector_store_file_id)
+            except openai.OpenAIError as e:
+                flash(f"Warning: Could not remove file from vector store. Error: {str(e)}", "warning")
 
     # Remove the file from the database
     db.session.delete(content)
     db.session.commit()
-
-    # Remove file from vector store
-    if content.vector_store_file_id:
-        try:
-            # Try to delete vector_store file
-            openai_client.vector_stores.files.delete(
-                vector_store_id=course.vector_store_id,
-                file_id=content.vector_store_file_id
-            )
-            openai_client.files.delete(content.vector_store_file_id)
-        except openai.OpenAIError as e:
-            flash(f"Warning: Could not check vector store files. Error: {str(e)}", "warning")
-    else:
-        flash("Warning: No vector store file ID found. Skipping vector store deletion.", "warning")
 
     flash("File deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=content.course_id))
@@ -829,37 +815,45 @@ def delete_folder():
         flash("You do not have permission to delete this folder.", "danger")
         return redirect(url_for("manage_course", course_id=folder.course_id))
 
-    # Delete all files in the folder
+    # Define bucket name
+    bucket_name = "course-content"
+
+    # Get all files in the folder
     files_in_folder = CourseContent.query.filter_by(folder_id=folder_id).all()
+
+    # Separate YouTube videos from actual files
+    file_paths = [file.file_url for file in files_in_folder if file.file_extension != "youtube"]
+
+    # Delete actual files from cloud storage
+    if file_paths:
+        try:
+            response = supabase.storage.from_(bucket_name).remove(file_paths)
+        except Exception as e:
+            flash(f"Error deleting files from cloud storage: {str(e)}", "danger")
+            return redirect(url_for("manage_course", course_id=folder.course_id))
+
+    # Delete all files (including YouTube videos) from the database
     for file in files_in_folder:
-        if os.path.exists(file.file_url):
-            os.remove(file.file_url)  # Delete file from the file system
-        db.session.delete(file)  # Delete file from the database
-        
-        # Delete files from vector store
-        if file.vector_store_file_id:
+        db.session.delete(file)
+
+        # Remove from vector store if applicable (not for YouTube)
+        if file.file_extension != "youtube" and file.vector_store_file_id:
             try:
                 openai_client.vector_stores.files.delete(
                     vector_store_id=course.vector_store_id,
                     file_id=file.vector_store_file_id
                 )
                 openai_client.files.delete(file.vector_store_file_id)
-
             except openai.OpenAIError as e:
                 flash(f"Warning: Could not remove file from vector store. Error: {str(e)}", "warning")
 
-
-    # Delete the folder itself
+    # Delete the folder itself from the database
     db.session.delete(folder)
     db.session.commit()
 
-    # Remove the folder from the file system
-    folder_path = os.path.join(app.config["UPLOAD_FOLDER"], f"course_{folder.course_id}", folder.name)
-    if os.path.exists(folder_path):
-        os.rmdir(folder_path)  # Remove the empty folder
-
     flash("Folder and its files deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=folder.course_id))
+
 
 @app.route('/chat/<int:course_id>')
 @login_required
@@ -899,7 +893,6 @@ def handle_message(data):
 
         ai_response = response.output[-1].content[0].text
 
-        print(response)
 
         # Emit response back to the client
         emit("receive_message", {"message": ai_response}, broadcast=True)
