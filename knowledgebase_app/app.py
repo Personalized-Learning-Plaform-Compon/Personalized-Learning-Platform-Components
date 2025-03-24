@@ -861,9 +861,6 @@ def delete_folder():
     flash("Folder and its files deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=folder.course_id))
 
-<<<<<<< Updated upstream
-
-
 @app.route('/chat/<int:course_id>')
 @login_required
 def chat(course_id):
@@ -933,8 +930,6 @@ def handle_message(data):
     # emit('receive_message', {'message': ai_response}, broadcast=True)
 
 
-=======
->>>>>>> Stashed changes
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
 def generate_quiz():
