@@ -2,15 +2,15 @@
 
 {% block content %}
 
-<div class="max-w-3xl mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg">
+<div class="max-w-5xl mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg border-4 border-gray-300">
     <!-- File Name Header -->
     <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">{{ filename }}</h1>
 
     <!-- File Preview Section -->
     <div class="file-preview">
         {% if youtube %}
-            <div class="relative w-full h-64 sm:h-96">
-                <iframe src="{{ content.file_url }}" 
+            <div class="relative w-full" style="padding-bottom: 56.25%;">
+                <iframe src="{{ file_url }}" 
                         class="absolute inset-0 w-full h-full rounded-lg" 
                         frameborder="0" 
                         allowfullscreen>
@@ -18,7 +18,7 @@
             </div>
 
         {% elif file_extension in ["pdf", "txt"] %}
-            <div class="relative w-full h-96">
+            <div class="relative w-full" style="padding-bottom: 100%;">
                 <iframe src="{{ file_url }}" 
                         class="absolute inset-0 w-full h-full rounded-lg border" 
                         frameborder="0">
@@ -43,15 +43,15 @@
     <div class="text-center mt-6">
         <button onclick="goBack()"
            class="inline-block bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition cursor-pointer">
-            Back to Topic
+            Back
         </button> 
     </div>
-
-    <script>
-        function goBack() {
-          window.history.back();
-        }
-    </script>
 </div>
+
+<script>
+function goBack() {
+    window.history.back();
+}
+</script>
 
 {% endblock %}

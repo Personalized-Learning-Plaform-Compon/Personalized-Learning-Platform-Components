@@ -5,7 +5,9 @@
 <div class="max-w-3xl mx-auto mt-12 px-6 text-center">
 
     <!-- Welcome Message -->
-    <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Welcome to KnowledgeBase!</h1>
+    <h1 class="text-4xl font-extrabold text-black mb-6  from-blue-600 via-purple-600 to-blue-600 rounded-lg p-4">
+        Welcome to KnowledgeBase!
+    </h1>
 
     <!-- Logo Section -->
     <div class="logo-container mx-auto mb-8">
@@ -13,9 +15,10 @@
     </div>
 
     <!-- Description Section -->
-    <p id="siteDescription" class="text-lg text-gray-600 leading-relaxed">
+    <p id="siteDescription" class="text-lg text-black leading-relaxed mb-8  from-blue-600 via-purple-600 to-blue-600 rounded-lg p-4">
         A personalized learning platform with adapted quizzes for students and course content management for instructors and program directors.
     </p>
+
     {% if not current_user.is_authenticated %}
     <!-- Action Button -->
     <div class="mt-8">
