@@ -14,6 +14,7 @@ from sqlalchemy import func, distinct
 import openai 
 from forms import LoginForm, RegistrationForm, StudentProfileForm
 from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
+from recommendations import fetch_youtube_videos, fetch_google_sites
 
 from generate_quiz import generate_quiz_from_openai
 
@@ -453,6 +454,7 @@ def add_course():
 def course_page(course_id):
     # Query the course by ID
     course = Courses.query.get(course_id)
+    student = Students.query.filter_by(user_id=current_user.id).first()
     if not course:
         flash("Course not found.", "danger")
         return redirect(url_for('dashboard'))
@@ -477,8 +479,21 @@ def course_page(course_id):
             for category in categories:
                 if category.strip().lower() in student.learning_style.lower():
                     suggested_content.append(file)
+    yt_links = None
+    google_links = None
+    if student.learning_style == 'Visual' or student.learning_style == 'Auditory':
+        recs = fetch_youtube_videos('python')
+        yt_links = [i['url'] for i in recs]
+    elif student.learning_style == 'Reading/Writing':
+        recs = fetch_google_sites('python')
+        google_links = [(i['url'], i['title']) for i in recs]
+    else:
+        recs = fetch_google_sites('python challenges')
+        google_links = [(i['url'], i['title']) for i in recs]
+    #breakpoint()
+    
     # Pass the course to the template
-    return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student)
+    return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student, recs=recs, yt_links=yt_links, google_links=google_links)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
