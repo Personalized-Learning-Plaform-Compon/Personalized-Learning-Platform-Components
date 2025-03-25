@@ -11,3 +11,4 @@ bootstrap-flask
 openai
 flask-socketio
 markdown
+supabase 
