@@ -1076,7 +1076,7 @@ def balanced_recommendations(student_id):
         "advanced_engagement quizzes": strong_quizzes
     })
 
-@app.route('/progress_data')
+@app.route('/progress_data') #TO DO: test new stuff I added
 @login_required
 def progress_data():
     student = Students.query.filter_by(user_id=current_user.id).first()
