@@ -869,6 +869,75 @@ def delete_folder():
     flash("Folder and its files deleted successfully!", "success")
     return redirect(url_for("manage_course", course_id=folder.course_id))
 
+
+@app.route('/chat/<int:course_id>')
+@login_required
+def chat(course_id):
+    user_id = session.get('_user_id')
+    user = db.session.get(User, user_id)
+
+    course = Courses.query.get_or_404(course_id)  # Fetch the course from the database
+    student = Students.query.filter_by(user_id=user.id).first()
+    return render_template('chat.html', course=course, student=student)
+
+@socketio.on('send_message')
+def handle_message(data):
+    user_message = data.get("message", "")
+    courseName = data.get("courseName", "")
+    learningStyle = data.get("learningStyle", "")
+    learningPace = data.get("learningPace", "")
+    vectorStoreId = data.get("vectorStoreId", "").strip()
+
+    try:
+        # OpenAI API Call
+        response = openai_client.responses.create(
+            model="gpt-4o-mini",
+            instructions=f"You are a tutor specializing in {courseName}. "
+                         f"Adapt to the student's learning style: {learningStyle} and pace: {learningPace}. "
+                         f"Do not answer questions unrelated to the course material"
+                         f"Give your responses in HTML format, and don't include <html>, <meta>, <DOCTYPE>, <title>, <head>, or <body> tags, however, <h> tags are fine.",
+            input=user_message,
+            tools=[{
+                "type": "file_search",
+                "vector_store_ids": [vectorStoreId],
+                "max_num_results": 1
+            }],
+            max_output_tokens=1000,
+            temperature = 0.4
+        )
+
+        ai_response = response.output[-1].content[0].text
+
+
+        # Emit response back to the client
+        emit("receive_message", {"message": ai_response}, broadcast=True)
+        
+
+    except Exception as e:
+        emit("receive_message", {"message": f"Error: {str(e)}"})
+
+
+    # Simulated AI response (Replace this with OpenAI API call)
+    # ai_response = """
+    #     <h2>Defining a Function in Python</h2>
+    #     <p>To define a user-defined function (UDF) in Python, follow these rules:</p>
+    #     <ol>
+    #         <li><strong>Use the <code>def</code> Keyword:</strong> Start with the keyword <code>def</code>, followed by the function name and parentheses <code>()</code>.</li>
+    #         <li><strong>Parameters:</strong> Any parameters or arguments should be placed <br> <br> within the parentheses.</li>
+    #         <li><strong>Docstring:</strong> Optionally, the first statement can be a documentation string (docstring) that describes the function.</li>
+    #         <li><strong>Colon and Indentation:</strong> The function block starts with a colon <code>:</code> and must be indented.</li>
+    #         <li><strong>Return Statement:</strong> Use <code>return [expression]</code> to exit the function, optionally passing back an expression.</li>
+    #     </ol>
+    #     <h3>Example Function:</h3>
+    #     <pre><code>def greet(name):
+    #         return f"Hello, {name}!"
+    #     </code></pre>
+    # """
+
+    # time.sleep(5)  # Simulate processing delay
+    # emit('receive_message', {'message': ai_response}, broadcast=True)
+
+
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
 def generate_quiz():
