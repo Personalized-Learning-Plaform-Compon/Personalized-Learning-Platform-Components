@@ -62,6 +62,7 @@
 
             </div>
             <script>
+    
 document.addEventListener("DOMContentLoaded", function() {
     fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
         .then(response => response.json())
@@ -120,7 +121,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <ul class="mt-3 space-y-2">
                         {% for content in suggested_content %}
                             <li>
-                                <a href="{{ url_for('view_file', course_id=course.id, folder_name=content.folder.name, filename=content.filename, file_extension=content.file_extension) }}" 
+                                <a href="{{ url_for('view_file', content_id=content.id) }}"
                                    class="block py-2 px-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
                                     {{ content.filename }}
                                 </a>
@@ -156,13 +157,50 @@ document.addEventListener("DOMContentLoaded", function() {
       <h3 class="text-xl font-semibold">🚀 Advanced Challenges</h3>
       <ul id="strong-recommendations" class="quiz-list"></ul>
     </div>
+
+    <div class="recommendation-section bg-gray-100 p-4 rounded-lg mb-6 text-center">
+      <h3 class="text-xl font-semibold mb-4">📈 Suggested Content</h3>
+      {% if yt_links %}
+      <ul id="suggested-content" class="content-list flex flex-wrap justify-center gap-4">
+          {% for url in yt_links %}
+          <li class="mb-4">
+              <iframe width="300" height="180" 
+                  src="{{ url.replace('watch?v=', 'embed/') }}" 
+                  frameborder="0" allowfullscreen 
+                  class="rounded-lg shadow-md">
+              </iframe>
+          </li>
+          {% endfor %}
+      </ul>
+      {% endif %}
+      {% if google_links %}
+<div class="recommendation-section bg-gray-100 p-4 rounded-lg mb-6 text-center">
+    <ul id="google-sites-list" class="flex flex-wrap justify-center gap-3">
+        {% for url, title in google_links %}
+        <li class="mb-3">
+            <div class="bg-white p-4 rounded-lg shadow-md w-60 text-center border border-gray-200">
+                <p class="font-semibold text-sm text-gray-900">{{ title }}</p>
+                <a href="{{ url }}" target="_blank"
+                   class="inline-block mt-2 px-3 py-1 rounded-md text-white text-xs font-medium 
+                          bg-gradient-to-r from-blue-500 to-purple-600 shadow-md hover:scale-105 
+                          hover:shadow-lg transition transform duration-300">
+                    🌐 Visit Site
+                </a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+  </div>
+  
+  
   </div>
   
   <script>
-  document.addEventListener("DOMContentLoaded", function() {
     
-
-
+  document.addEventListener("DOMContentLoaded", function() {
     {% for course, teacher in courses %}
     console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
     fetch("/milestones/{{ current_user.id }}/{{ course.id }}")

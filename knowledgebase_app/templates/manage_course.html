@@ -34,7 +34,13 @@
         <!-- File Upload Section -->
         <div id="file_upload_section" class="mt-4">
             <form action="{{ url_for('upload_content', course_id=course.id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                <input type="file" name="file" id="file" class="block w-full border-gray-300 rounded-lg">
+                <div class="relative w-full">
+                    <input type="file" name="file" id="file" class="hidden" onchange="updateFileName()">
+                    <label for="file" class="block w-full px-4 py-2 text-white bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700 text-center">
+                        Choose File
+                    </label>
+                    <p id="file-name" class="mt-2 text-gray-700 text-sm text-center"></p>
+                </div>
                 
                 <input type="text" name="file_name" placeholder="Enter file name" required 
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -81,16 +87,16 @@
                 <fieldset class="border border-gray-300 rounded-lg p-4">
                     <legend class="text-gray-700">Select Content Type(s):</legend>
                     <label class="inline-flex items-center">
-                        <input type="checkbox" name="category" value="visual" class="mr-2"> Visual
+                        <input type="checkbox" name="category" value="visual" class="mr-2"> Visual (e.g., diagrams, videos)
                     </label><br>
                     <label class="inline-flex items-center">
-                        <input type="checkbox" name="category" value="auditory" class="mr-2"> Auditory
+                        <input type="checkbox" name="category" value="auditory" class="mr-2"> Auditory (e.g., podcasts, lectures)
                     </label><br>
                     <label class="inline-flex items-center">
-                        <input type="checkbox" name="category" value="kinesthetic" class="mr-2"> Kinesthetic
+                        <input type="checkbox" name="category" value="kinesthetic" class="mr-2"> Kinesthetic (e.g., simulations)
                     </label><br>
                     <label class="inline-flex items-center">
-                        <input type="checkbox" name="category" value="reading" class="mr-2"> Reading/Writing
+                        <input type="checkbox" name="category" value="reading" class="mr-2"> Reading/Writing (e.g., articles, notes)
                     </label>
                 </fieldset>
 
@@ -101,7 +107,7 @@
                     {% endfor %}
                 </select>
 
-                <button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" type="submit">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" type="submit">
                     Add YouTube Video
                 </button>
             </form>
@@ -143,6 +149,16 @@
         var uploadType = document.getElementById("upload_type").value;
         document.getElementById("file_upload_section").classList.toggle("hidden", uploadType !== "file");
         document.getElementById("youtube_upload_section").classList.toggle("hidden", uploadType !== "youtube");
+    }
+    function updateFileName() {
+        const fileInput = document.getElementById('file');
+        const fileNameDisplay = document.getElementById('file-name');
+        
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = fileInput.files[0].name;
+        } else {
+            fileNameDisplay.textContent = "";
+        }
     }
 </script>
 {% endblock %}
