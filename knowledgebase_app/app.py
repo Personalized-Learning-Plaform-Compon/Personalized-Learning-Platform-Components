@@ -880,6 +880,9 @@ def chat(course_id):
     student = Students.query.filter_by(user_id=user.id).first()
     return render_template('chat.html', course=course, student=student)
 
+# Store previous response IDs per user session
+user_sessions = {}
+
 @socketio.on('send_message')
 def handle_message(data):
     user_message = data.get("message", "")
@@ -888,30 +891,44 @@ def handle_message(data):
     learningPace = data.get("learningPace", "")
     vectorStoreId = data.get("vectorStoreId", "").strip()
 
+    # Identify user session (assuming they have a unique session ID)
+    user_id = session.get("user_id")  # Use request.sid if user_id isn't stored in session
+
+    # Retrieve previous response ID for context (if exists)
+    previous_response_id = user_sessions.get(user_id)
+
     try:
-        # OpenAI API Call
-        response = openai_client.responses.create(
-            model="gpt-4o-mini",
-            instructions=f"You are a tutor specializing in {courseName}. "
-                         f"Adapt to the student's learning style: {learningStyle} and pace: {learningPace}. "
-                         f"Do not answer questions unrelated to the course material"
-                         f"Give your responses in HTML format, and don't include <html>, <meta>, <DOCTYPE>, <title>, <head>, or <body> tags, however, <h> tags are fine.",
-            input=user_message,
-            tools=[{
+        # Prepare OpenAI API call
+        request_params = {
+            "model": "gpt-4o-mini",
+            "instructions": f"You are a tutor specializing in {courseName}. "
+                            f"Adapt to the student's learning style: {learningStyle} and pace: {learningPace}. "
+                            f"Do not answer questions unrelated to the course material. "
+                            f"Give your responses in HTML format, and don't include <html>, <meta>, <DOCTYPE>, <title>, <head>, or <body> tags, however, <h> tags are fine.",
+            "input": user_message,
+            "tools": [{
                 "type": "file_search",
                 "vector_store_ids": [vectorStoreId],
                 "max_num_results": 1
             }],
-            max_output_tokens=1000,
-            temperature = 0.4
-        )
+            "max_output_tokens": 1000,
+            "temperature": 0.4
+        }
 
+        # Include previous_response_id for follow-ups
+        if previous_response_id:
+            request_params["previous_response_id"] = previous_response_id
+
+        response = openai_client.responses.create(**request_params)
+
+        # Extract response text
         ai_response = response.output[-1].content[0].text
 
+        # Store the latest response ID for this user session
+        user_sessions[user_id] = response.id
 
         # Emit response back to the client
         emit("receive_message", {"message": ai_response}, broadcast=True)
-        
 
     except Exception as e:
         emit("receive_message", {"message": f"Error: {str(e)}"})
