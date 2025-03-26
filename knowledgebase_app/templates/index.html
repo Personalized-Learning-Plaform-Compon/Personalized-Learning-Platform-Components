@@ -30,6 +30,32 @@
             border-radius: 12px;
             padding: 20px;
         }
+
+        /* Flash Messages Styling */
+        .flash-message {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            color: #444;
+        }
+
+        .flash-success {
+            background-color: #D4EDDA; /* Soft green */
+            border-left: 6px solid #88C093;
+        }
+
+        .flash-warning {
+            background-color: #FFF3CD; /* Soft yellow */
+            border-left: 6px solid #E0B85A;
+        }
+
+        .flash-error {
+            background-color: #F8D7DA; /* Soft red */
+            border-left: 6px solid #D88B92;
+        }
     </style>
 </head>
 <body class="text-gray-900 font-sans">
@@ -62,8 +88,10 @@
         {% with messages = get_flashed_messages(with_categories=True) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg text-white text-lg text-center
-                        {% if category == 'success' %} bg-green-500 {% elif category == 'warning' %} bg-yellow-500 {% else %} bg-red-500 {% endif %}">
+                    <div class="flash-message 
+                        {% if category == 'success' %} flash-success 
+                        {% elif category == 'warning' %} flash-warning 
+                        {% else %} flash-error {% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}

@@ -104,7 +104,7 @@ def login():
             except Exception as e:
                 print(f"Error occurred: {e}")
         else:
-            flash('Login Failed! Please check your credentials', 'danger')
+            flash('Login Failed! Please check your credentials.', 'danger')
     return render_template('login.html', form=form)
 
 @app.route('/about')
