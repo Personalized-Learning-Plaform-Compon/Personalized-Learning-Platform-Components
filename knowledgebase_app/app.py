@@ -1221,38 +1221,6 @@ def balanced_recommendations(student_id):
         "advanced_engagement quizzes": strong_quizzes
     })
 
-@app.route('/progress_data') #TO DO: test new stuff I added
-@login_required
-def progress_data():
-    student = Students.query.filter_by(user_id=current_user.id).first()
-    if not student:
-        return jsonify({"error": "Student not found"}), 404
-
-    courses = db.session.query(Courses, Teachers) \
-        .join(CourseEnrollment, Courses.id == CourseEnrollment.course_id) \
-        .join(Teachers) \
-        .filter(CourseEnrollment.student_id == student.id).all()
-
-    progress_info = []
-    for course, _ in courses:
-        total_quizzes = db.session.query(Quizzes) \
-            .filter(Quizzes.courses_id == course.id).count()
-        completed_quizzes = db.session.query(func.count(distinct(Student_Progress.quiz_id))) \
-            .join(Quizzes) \
-            .filter(
-                Student_Progress.student_id == student.id,
-                Student_Progress.action == 'complete',
-                Quizzes.courses_id == course.id
-            ).scalar()
-        percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
-        progress_info.append({
-            "course_name": course.name,
-            "completion_percentage": round(percentage, 2)
-        })
-
-    return jsonify(progress_info)
-
-
 
 if __name__ == "__main__":
     with app.app_context():
