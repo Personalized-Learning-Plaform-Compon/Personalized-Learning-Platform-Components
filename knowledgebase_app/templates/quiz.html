@@ -42,6 +42,19 @@ let quizData = [];
 let startTime = null;
 let userAnswers = []; // To track answers for adaptive difficulty
 
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if topic is passed in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const topic = urlParams.get('topic');
+    
+    if (topic) {
+        document.getElementById('quizTopic').value = topic;
+        // Optionally, automatically trigger quiz generation
+        document.getElementById('quizForm').dispatchEvent(new Event('submit'));
+    }
+});
+
+
 document.getElementById("quizForm").onsubmit = async function(e) {
     e.preventDefault();
     

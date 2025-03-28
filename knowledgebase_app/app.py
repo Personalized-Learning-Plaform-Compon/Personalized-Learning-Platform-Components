@@ -945,43 +945,64 @@ def generate_quiz():
     try:
         data = request.get_json()
         quiz_topic = data.get('quiz_topic')
-        previous_performance = data.get('previous_performance', None)
         
         # Get the current student
         student = Students.query.filter_by(user_id=current_user.id).first()
         if not student:
             return jsonify({"error": "Student record not found"}), 404
         
-        # Check if we have difficulty information based on previous answers
-        if previous_performance:
-            # Get difficulty levels for new questions
-            questions_with_difficulty = []
-            for question_result in previous_performance:
-                question_id = question_result.get('question_id')
-                was_correct = question_result.get('was_correct')
-                current_difficulty = question_result.get('difficulty', 'Medium')
-                
-                # Determine next difficulty level
-                next_difficulty = adjust_difficulty(current_difficulty, was_correct)
-                
-                # Store for use in question generation
-                questions_with_difficulty.append({
-                    'id': question_id,
-                    'next_difficulty': next_difficulty
-                })
-                
-            # Generate new questions based on adaptive difficulty
-            questions = generate_adaptive_questions(quiz_topic, questions_with_difficulty)
-        else:
-            # First time taking this quiz, start with medium difficulty
-            questions = generate_initial_questions(quiz_topic)
+        # Generate initial questions for the topic
+        questions = generate_initial_questions(quiz_topic)
+        
+        # Add topic to each question for tracking
+        for q in questions:
+            q['topic'] = quiz_topic
         
         return jsonify({"quiz_questions": questions})
-        
+    
     except Exception as e:
-        error_msg = f"Failed to generate quiz: {str(e)}"
-        print(error_msg)
-        return jsonify({"error": error_msg}), 500
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/submit_quiz', methods=['POST'])
+@login_required
+def submit_quiz():
+    """Submit quiz results and update student performance"""
+    try:
+        data = request.get_json()
+        topic = data.get('topic')
+        score = data.get('score')
+        questions = data.get('questions')
+        user_answers = data.get('user_answers')
+        
+        # Get the current student
+        student = Students.query.filter_by(user_id=current_user.id).first()
+        if not student:
+            return jsonify({"error": "Student record not found"}), 404
+        
+        # Create a quiz result record
+        quiz_result = QuizResult(
+            student_id=student.id,
+            topic=topic,
+            score=score,
+            total_questions=len(questions)
+        )
+        db.session.add(quiz_result)
+        
+        # Optionally, update student's performance metrics
+        # This is a placeholder - implement your own logic
+        student.update_performance(topic, score)
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True, 
+            "message": "Quiz submitted successfully",
+            "score": score
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 def adjust_difficulty(current_difficulty, was_correct):
     """Adjust difficulty based on whether the previous answer was correct"""
