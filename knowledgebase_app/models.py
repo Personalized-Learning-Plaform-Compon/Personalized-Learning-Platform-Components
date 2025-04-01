@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.ext.mutable import MutableDict
+
 
 db = SQLAlchemy()
 
@@ -84,7 +86,7 @@ class Student_Progress(db.Model):
     __tablename__ = 'student_progress'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.user_id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.quiz_id'), nullable=False)
     score = db.Column(db.Numeric(5, 2), nullable=False)
     topic = db.Column(db.String(255), nullable=False)
@@ -92,6 +94,53 @@ class Student_Progress(db.Model):
     action = db.Column(db.String(255)) #complete, review, start
     attempt_date = db.Column(db.DateTime, nullable=False)
     quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy='joined') )
+    python_intro_competencies = db.Column(MutableDict.as_mutable(db.JSON), default={
+        'compilation and execution': ('None', 0),
+        'binary': ('None', 0),
+        'problem solving techniques': ('None', 0),
+        'representation of algorithms': ('None', 0),
+        'run time analysis': ('None', 0),
+        'python syntax and semantics': ('None', 0),
+        'data and data types': ('None', 0),
+        'variables and constants': ('None', 0),
+        'arithmetic expressions': ('None', 0),
+        'arithmetic operators': ('None', 0),
+        'assignment statements': ('None', 0),
+        'type coercion and casting': ('None', 0),
+        'standard output': ('None', 0),
+        'libraries and code importing': ('None', 0),
+        'programmer defined functions': ('None', 0),
+        'void and value returning functions': ('None', 0),
+        'interactive i/o': ('None', 0),
+        'text i/o': ('None', 0),
+        'image i/o': ('None', 0),
+        'pseudocode': ('None', 0),
+        'logical expressions': ('None', 0),
+        'relational and logical operators': ('None', 0),
+        'conditional statements': ('None', 0),
+        'nested conditionals': ('None', 0),
+        'while loops': ('None', 0),
+        'for loops': ('None', 0),
+        'call by reference/value': ('None', 0),
+        'parameters': ('None', 0),
+        'variable scope and lifetime': ('None', 0),
+        'local and global variables': ('None', 0),
+        'automatic and static variables': ('None', 0),
+        'boolean functions': ('None', 0),
+        'assertions and comments': ('None', 0),
+        'increment and decrement operators': ('None', 0),
+        'limited precision and round-off errors': ('None', 0),
+        'lists': ('None', 0),
+        '2d lists': ('None', 0),
+        'passing lists as parameters': ('None', 0),
+        'string and character manipulation': ('None', 0),
+        'advanced containers': ('None', 0),
+        'algorithmic complexity': ('None', 0),
+        'search/sort algorithms': ('None', 0),
+        'terminal commands': ('None', 0),
+        'cloud ide usage': ('None', 0),
+        'local device development': ('None', 0),
+    })
     
 
 class Folder(db.Model):

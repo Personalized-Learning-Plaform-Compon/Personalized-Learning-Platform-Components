@@ -42,7 +42,12 @@
             0%
         </span>
                 </div>
-                <p class="text-gray-700 mt-2">Course Progress</p>
+                <a href="{{ url_for('course_progress', course_id=course.id) }}" class="text-gray-700 mt-2 hover:underline flex items-center">
+                    <p class="mr-2">Course Progress</p>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666" style="margin-top: 3px;">
+                        <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/>
+                    </svg>
+                </a>
                 <div class="mt-4 flex space-x-2">
         <span id="milestone-25" class="badge hidden bg-gray-300 text-white px-2 py-1 rounded-full">🎖 25%</span>
         <span id="milestone-50" class="badge hidden bg-blue-400 text-white px-2 py-1 rounded-full">🏅 50%</span>
@@ -145,24 +150,25 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
     </div>
 </div>
-!-- Course Quizzes Section -->
+<br>
+<!-- !-- Course Quizzes Section -->
 <div class="bg-gray-100 p-6 rounded-lg shadow-md">
   <h3 class="text-2xl font-semibold text-blue-700">Course Quizzes</h3>
   <p class="text-gray-600 mt-2 text-center">Test your knowledge with our adaptive quizzes!</p>
   
   <div class="mt-4 space-y-4" id="course-quizzes-container">
-      {% for topic in course.topics %}
+      {% for folder in course.folders %}
       <div class="bg-white p-4 rounded-lg shadow-md">
           <div class="flex justify-between items-center mb-3">
               <div>
-                  <h4 class="text-lg font-semibold text-gray-800">{{ topic.name }} Quiz</h4>
-                  <p class="text-gray-600 text-sm">Test your understanding of {{ topic.name }}</p>
+                  <h4 class="text-lg font-semibold text-gray-800">{{ folder.name }} Quiz</h4>
+                  <p class="text-gray-600 text-sm">Test your understanding of {{ folder.name }}</p>
               </div>
           </div>
           
           <!-- Quiz Generation Area -->
-          <div id="quiz-{{ topic.id }}" class="quiz-container">
-              <button onclick="generateQuiz('{{ topic.name }}')" 
+          <div id="quiz-{{ folder.id }}" class="quiz-container">
+              <button onclick="generateQuiz('{{ folder.name }}')" 
                  class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
                   Generate Quiz
               </button>
@@ -171,151 +177,161 @@ document.addEventListener("DOMContentLoaded", function() {
       {% endfor %}
   </div>
   
-  {% if not course.topics %}
+  {% if not course.folders %}
   <p class="text-center text-gray-500 italic">No quizzes available for this course yet.</p>
   {% endif %}
 </div>
 
 <script>
-function generateQuiz(topic) {
-  // Find the container for this specific topic's quiz
-  const quizContainer = document.querySelector(`div[id^="quiz-"]`);
+  function generateQuiz(topic) {
+    // Find the container for this specific topic's quiz
+    const quizContainer = document.querySelector(`div[id^="quiz-"]`);
+    
+    // Show loading indicator
+    quizContainer.innerHTML = `
+        <div class="flex items-center justify-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <span class="ml-2">Generating quiz for ${topic}...</span>
+        </div>
+    `;
+    
+    // Make AJAX request to generate quiz
+    fetch('/generate_quiz', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            quiz_topic: topic
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Render quiz questions
+        renderQuiz(quizContainer, data.quiz_questions, topic);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        quizContainer.innerHTML = `
+            <div class="text-red-500">Failed to generate quiz. Please try again.</div>
+        `;
+    });
+  }
   
-  // Show loading indicator
-  quizContainer.innerHTML = `
-      <div class="flex items-center justify-center">
-          <div class="spinner-border text-primary" role="status">
-              <span class="sr-only">Loading...</span>
-          </div>
-          <span class="ml-2">Generating quiz for ${topic}...</span>
-      </div>
-  `;
+  function renderQuiz(container, questions, topic) {
+    // Clear previous content
+    container.innerHTML = '';
+    
+    // Create quiz form
+    const quizForm = document.createElement('form');
+    quizForm.id = `quiz-form-${topic.replace(/\s+/g, '-')}`;
+    
+    // Render each question
+    questions.forEach((question, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'mb-4 p-4 bg-white rounded-lg shadow-md';
+        
+        // Question text
+        const questionText = document.createElement('h4');
+        questionText.className = 'font-semibold mb-2';
+        questionText.textContent = `${index + 1}. ${question.question}`;
+        questionDiv.appendChild(questionText);
+        
+        // Choices
+        question.choices.forEach((choice, choiceIndex) => {
+            const choiceDiv = document.createElement('div');
+            choiceDiv.className = 'flex items-center mb-2';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = `question-${index}`;
+            radio.value = choiceIndex;
+            radio.id = `q${index}-choice${choiceIndex}`;
+            radio.className = 'mr-2';
+            
+            const label = document.createElement('label');
+            label.htmlFor = `q${index}-choice${choiceIndex}`;
+            label.textContent = choice;
+            
+            choiceDiv.appendChild(radio);
+            choiceDiv.appendChild(label);
+            questionDiv.appendChild(choiceDiv);
+        });
+        
+        quizForm.appendChild(questionDiv);
+    });
+    
+    // Submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'Submit Quiz';
+    submitBtn.className = 'bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition';
+    submitBtn.onclick = (e) => {
+        e.preventDefault();
+        submitQuiz(quizForm, questions, topic);
+    };
+    
+    quizForm.appendChild(submitBtn);
+    container.appendChild(quizForm);
+  }
   
-  // Make AJAX request to generate quiz
-  fetch('/generate_quiz', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-          quiz_topic: topic
-      })
-  })
-  .then(response => response.json())
-  .then(data => {
-      // Render quiz questions
-      renderQuiz(quizContainer, data.quiz_questions, topic);
-  })
-  .catch(error => {
-      console.error('Error:', error);
-      quizContainer.innerHTML = `
-          <div class="text-red-500">Failed to generate quiz. Please try again.</div>
-      `;
-  });
-}
-
-function renderQuiz(container, questions, topic) {
-  // Clear previous content
-  container.innerHTML = '';
-  
-  // Create quiz form
-  const quizForm = document.createElement('form');
-  quizForm.id = `quiz-form-${topic.replace(/\s+/g, '-')}`;
-  
-  // Render each question
-  questions.forEach((question, index) => {
-      const questionDiv = document.createElement('div');
-      questionDiv.className = 'mb-4 p-4 bg-white rounded-lg shadow-md';
-      
-      // Question text
-      const questionText = document.createElement('h4');
-      questionText.className = 'font-semibold mb-2';
-      questionText.textContent = `${index + 1}. ${question.question}`;
-      questionDiv.appendChild(questionText);
-      
-      // Choices
-      question.choices.forEach((choice, choiceIndex) => {
-          const choiceDiv = document.createElement('div');
-          choiceDiv.className = 'flex items-center mb-2';
-          
-          const radio = document.createElement('input');
-          radio.type = 'radio';
-          radio.name = `question-${index}`;
-          radio.value = choiceIndex;
-          radio.id = `q${index}-choice${choiceIndex}`;
-          radio.className = 'mr-2';
-          
-          const label = document.createElement('label');
-          label.htmlFor = `q${index}-choice${choiceIndex}`;
-          label.textContent = choice;
-          
-          choiceDiv.appendChild(radio);
-          choiceDiv.appendChild(label);
-          questionDiv.appendChild(choiceDiv);
-      });
-      
-      quizForm.appendChild(questionDiv);
-  });
-  
-  // Submit button
-  const submitBtn = document.createElement('button');
-  submitBtn.textContent = 'Submit Quiz';
-  submitBtn.className = 'bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition';
-  submitBtn.onclick = (e) => {
-      e.preventDefault();
-      submitQuiz(quizForm, questions);
-  };
-  
-  quizForm.appendChild(submitBtn);
-  container.appendChild(quizForm);
-}
-
-function submitQuiz(form, questions) {
-  const userAnswers = [];
-  let score = 0;
-  
-  questions.forEach((question, index) => {
-      const selectedOption = form.querySelector(`input[name="question-${index}"]:checked`);
-      
-      if (selectedOption) {
-          const userChoice = parseInt(selectedOption.value);
-          const isCorrect = userChoice === question.correct_answer;
-          
-          userAnswers.push({
-              question_id: `q_${index}`,
-              was_correct: isCorrect,
-              difficulty: question.difficulty || 'Medium'
-          });
-          
-          if (isCorrect) score++;
-      }
-  });
-  
-  const scorePercentage = Math.round((score / questions.length) * 100);
-  
-  // Submit results to server
-  fetch('/submit_quiz', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-          topic: questions[0].topic || 'Unknown Topic',
-          score: scorePercentage,
-          questions: questions,
-          user_answers: userAnswers
-      })
-  })
-  .then(response => response.json())
-  .then(data => {
-      alert(`Quiz submitted! Your score: ${scorePercentage}%`);
-  })
-  .catch(error => {
-      console.error('Error submitting quiz:', error);
-      alert('Failed to submit quiz. Please try again.');
-  });
-}
+  function submitQuiz(form, questions, topic) {
+    const userAnswers = [];
+    let score = 0;
+    
+    questions.forEach((question, index) => {
+        const selectedOption = form.querySelector(`input[name="question-${index}"]:checked`);
+        
+        if (selectedOption) {
+            const userChoice = parseInt(selectedOption.value);
+            const isCorrect = userChoice === question.correct_answer;
+            
+            userAnswers.push({
+                question_id: `q_${index}`,
+                was_correct: isCorrect,
+                difficulty: question.difficulty || 'Medium'
+            });
+            
+            if (isCorrect) score++;
+        }
+    });
+    
+    const scorePercentage = Math.round((score / questions.length) * 100);
+    
+    // Submit results to server
+    fetch('/submit_quiz', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            topic: questions[0].topic || 'Unknown Topic',
+            score: scorePercentage,
+            questions: questions,
+            user_answers: userAnswers
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(`Quiz submitted! Your score: ${scorePercentage}%`);
+        
+        // Re-enable the "Generate Quiz" button
+        form.innerHTML = `
+            <button onclick="generateQuiz('${topic}')" 
+               class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                Generate New Adaptive Quiz
+            </button>
+        `;
+    })
+    .catch(error => {
+        console.error('Error submitting quiz:', error);
+        alert('Failed to submit quiz. Please try again.');
+    });
+  }
+  </script>
 </script>
+
 <div class="recommendations-container mt-10">
     <h2 class="text-2xl font-semibold text-center mb-4">Personalized Content Recommendations</h2>
   
@@ -328,9 +344,9 @@ function submitQuiz(form, questions) {
       <h3 class="text-xl font-semibold">🚀 Advanced Challenges</h3>
       <ul id="strong-recommendations" class="quiz-list"></ul>
     </div>
-
+<br>
     <div class="recommendation-section bg-gray-100 p-4 rounded-lg mb-6 text-center">
-      <h3 class="text-xl font-semibold mb-4">📈 Suggested Content</h3>
+      <h3 class="text-xl font-semibold mb-4">📈 Suggested External Content</h3>
       {% if yt_links %}
       <ul id="suggested-content" class="content-list flex flex-wrap justify-center gap-4">
           {% for url in yt_links %}
@@ -447,121 +463,46 @@ function submitQuiz(form, questions) {
   text-align: center;
 }
 
-.progress-section {
-  margin-top: 10px;
-  padding: 10px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 20px;
-  background: #e0e0e0;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #4CAF50;
-  width: 0%;
-  transition: width 0.5s ease-in-out;
-}
-
-.blue-btn, .red-btn {
-  display: inline-block;
-  padding: 10px 20px;
-  margin: 10px 5px;
-  border-radius: 5px;
-  text-decoration: none;
-  color: white;
-}
-
-.blue-btn {
-  background-color: #007BFF;
-}
-
-.red-btn {
-  background-color: #dc3545;
-}
-
-@media (max-width: 768px) {
-  .courses {
-    flex-direction: column;
-  }
-}
-
-.recommendations-container {
-    max-width: 800px;
-    margin: auto;
-    padding: 20px;
-}
-
-.recommendation-section {
-    background: #f8f8f8;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-.quiz-list {
-    list-style: none;
-    padding: 0;
-}
-
 .quiz-card {
     background: #fff;
-    padding: 10px;
+    padding: 15px;
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-left: 5px solid #ff5f57;
     margin-bottom: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .difficulty-tag {
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 14px;
+    font-weight: bold;
     color: #fff;
+    text-transform: capitalize;
 }
 
-.difficulty-tag.easy {
-    background-color: #4CAF50;
-}
+.difficulty-tag.easy { background-color: #4CAF50; }
+.difficulty-tag.medium { background-color: rgb(248, 158, 48); }
+.difficulty-tag.hard { background-color: #f44336; }
 
-.difficulty-tag.hard {
-    background-color: #f44336;
-}
-.difficulty-tag.medium {
-    background-color:rgb(248, 158, 48);
-}
 .start-quiz {
     background-color: #007bff;
     color: #fff;
     border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 8px 12px;
+    border-radius: 20px;
     cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
 }
 
 .start-quiz:hover {
     background-color: #0056b3;
+    transform: scale(1.05);
 }
-
-.badge {
-    font-size: 14px;
-    font-weight: bold;
-}
-
-
-</style>
-
-<a href="{{ url_for('dashboard') }}" class="inline-block bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition mb-6">
-    Back to Dashboard
-</a>
-</div>
-
 
 
 {% endblock %}

@@ -1,0 +1,20 @@
+<h2>Quiz: {{ quiz.topic }}</h2>
+
+{% if questions %}
+<form id="quiz-form">
+    {% for question in questions %}
+    <div>
+        <p><strong>{{ question.question }}</strong></p>
+        {% for option in question.options %}
+        <label>
+            <input type="radio" name="q{{ loop.index0 }}" value="{{ option }}">
+            {{ option }}
+        </label><br>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <button type="submit">Submit</button>
+</form>
+{% else %}
+<p>No questions found. Try regenerating the quiz.</p>
+{% endif %}
