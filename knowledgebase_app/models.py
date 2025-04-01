@@ -42,8 +42,8 @@ class Students(db.Model):
     strengths = db.Column(db.JSON, default={})
     weaknesses = db.Column(db.JSON, default={})
     learning_style = db.Column(db.JSON, default={})
-    #interests = db.Column(db.JSON, default={})
-    #classification = db.Column(db.String(255), default=None) 
+    interests = db.Column(db.JSON, default={})
+    classification = db.Column(db.String(255), default=None) 
     learning_pace = db.Column(db.JSON, default={})
     user = db.relationship('User', backref=db.backref('students', lazy=True))
 
