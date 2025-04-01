@@ -562,7 +562,6 @@ def course_page(course_id):
         db.session.add(progress)
         db.session.commit() 
     competencies = [capitalize_important_words(i[0]) for i in progress.python_intro_competencies.items()]
-    #breakpoint()
     # Pass the course to the template
     return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student, recs=recs, yt_links=yt_links, google_links=google_links, competencies=competencies)
 
