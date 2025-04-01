@@ -1243,20 +1243,22 @@ def recommend_content(user_id):
     ).all()
 
     # Separate quizzes into weak and strong areas
-    weak_areas_quizzes = []
-    strong_areas_quizzes = []
+    weak_areas_quizzes = set()
+    strong_areas_quizzes = set()
 
     for quiz_id, topic, difficulty, score in weak_recommendations:
         # If student scored high on a "weak topic," move it to strong area instead
         if (quiz_id, topic, difficulty, score) in strong_recommendations:
-            strong_areas_quizzes.append({"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty})
+            strong_areas_quizzes.add((quiz_id, topic, difficulty))
         else:
-            weak_areas_quizzes.append({"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty})
+            weak_areas_quizzes.add((quiz_id, topic, difficulty))
 
     for quiz_id, topic, difficulty, score in strong_recommendations:
         if {"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty} not in strong_areas_quizzes:
-            strong_areas_quizzes.append({"quiz_id": quiz_id, "topic": topic, "difficulty": difficulty})
-
+            strong_areas_quizzes.add((quiz_id, topic, difficulty))
+            
+    weak_areas_quizzes = [{"quiz_id": q[0], "topic": q[1], "difficulty": q[2]} for q in weak_areas_quizzes]
+    strong_areas_quizzes = [{"quiz_id": q[0], "topic": q[1], "difficulty": q[2]} for q in strong_areas_quizzes]
     return jsonify({
         "student_id": user_id,
         "weak_areas_quizzes": weak_areas_quizzes,
