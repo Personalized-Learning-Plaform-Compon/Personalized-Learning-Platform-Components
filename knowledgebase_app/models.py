@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     lname = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(200), nullable=False)
-    school = db.Column(db.String(50), nullable=False)
+    school = db.Column(db.String(50), nullable=False) 
     user_type = db.Column(db.String(50), nullable=False)
 
     def set_password(self, password):
@@ -43,7 +43,8 @@ class Students(db.Model):
     weaknesses = db.Column(db.JSON, default={})
     learning_style = db.Column(db.JSON, default={})
     interests = db.Column(db.JSON, default={})
-    classification = db.Column(db.String(255), default=None) 
+    classification = db.Column(db.String(255), default=None)
+    #major = db.Column(db.String(255), default=None)
     learning_pace = db.Column(db.JSON, default={})
     user = db.relationship('User', backref=db.backref('students', lazy=True))
 

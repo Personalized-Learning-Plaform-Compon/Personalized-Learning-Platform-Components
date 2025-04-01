@@ -23,6 +23,8 @@
             <div>
                 <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
                 <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
+
+
             </div>
             {% endif %}
         </div>
@@ -47,6 +49,23 @@
 
             <button type="submit" class="mt-4 w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-300">
                 Update Learning Pace
+            </button>
+        </form>
+
+         <!-- Additional profile details form -->
+         <form method="POST" action="{{ url_for('update_profile_details') }}" class="mt-6">
+            {{ form.hidden_tag() }}
+            <label class="block text-gray-700 font-medium mb-1">Interests:</label>
+            <input type="text" name="interests" value="{{ student.interests or '' }}"
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            
+                   <label class="block text-gray-700 font-medium mb-1 mt-4">Classification:</label> <!-- TO DO: move to register page -->
+                   <input type="text" name="classification" value="{{ student.classification or '' }}"
+                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      
+            <button type="submit"
+                    class="mt-4 w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-300">
+                Update Profile Details
             </button>
         </form>
         {% endif %}

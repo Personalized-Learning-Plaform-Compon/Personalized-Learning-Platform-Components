@@ -16,7 +16,7 @@ from sqlalchemy import func, distinct
 import openai 
 from openai import OpenAI
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
+from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent 
 from recommendations import fetch_youtube_videos, fetch_google_sites
 from supabase import create_client, Client
 
@@ -190,6 +190,25 @@ def profile():
     form = StudentProfileForm()
     
     return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+
+@app.route('/update_profile_details', methods=['POST'])
+@login_required
+def update_profile_details():
+    user = current_user
+    student = Students.query.filter_by(user_id=user.id).first()
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for('profile'))
+
+    student.interests = request.form.get('interests')
+    student.classification = request.form.get('classification')
+    student.location = request.form.get('location')
+    db.session.commit()
+    flash("Profile details updated successfully.", "success")
+    return redirect(url_for('profile'))
+
+
+
 @app.route('/update_learning_style', methods=['POST'])
 @login_required
 def update_learning_style():
