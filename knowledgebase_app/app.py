@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import requests
 import re
@@ -277,6 +278,54 @@ def format_learning_methods(text):
     
     return "<ul>" + "".join(formatted_list) + "</ul>"
 
+@app.route('/course/<int:course_id>/progress')
+@login_required
+def course_progress(course_id):
+    course = Courses.query.get_or_404(course_id)
+    # Get the current student instance
+    student = Students.query.filter_by(user_id=current_user.id).first()
+    # Check if progress exists
+    progress = Student_Progress.query.filter_by(student_id=student.id).first()
+    if not progress:
+        progress = Student_Progress(
+            student_id=student.id,
+            quiz_id=1,
+            score=0,
+            topic="initial progress",
+            time_spent=0,
+            action="",
+            attempt_date=datetime.now(),
+        )
+        db.session.add(progress)
+        db.session.commit() 
+
+    competencies = progress.python_intro_competencies
+    # competencies['binary'] = ('Familiar', 100)
+    # db.session.commit()
+    
+    # Add any additional logic or data to pass to the template
+    return render_template('course_progress.html', course=course, student=student, progress=progress, competencies=competencies)
+
+def capitalize_important_words(text):
+    # List of words to exclude from capitalization
+    unimportant_words = {"and", "of", "in", "on", "at", "to", "for", "with", "a", "an", "the", "by", "from"}
+    
+    # Split the text into words
+    words = text.split()
+    
+    # Capitalize the first and last word, and important words
+    capitalized_words = [
+        word.capitalize() if i == 0 or i == len(words) - 1 or word.lower() not in unimportant_words else word.lower()
+        for i, word in enumerate(words)
+    ]
+    
+    # Join the words back into a single string
+    return " ".join(capitalized_words)
+
+@app.template_filter('title_case')
+def title_case_filter(text):
+    return capitalize_important_words(text)
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -498,7 +547,6 @@ def course_page(course_id):
     else:
         recs = fetch_google_sites('python challenges')
         google_links = [(i['url'], i['title']) for i in recs]
-    #breakpoint()
     
     # Pass the course to the template
     return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student, recs=recs, yt_links=yt_links, google_links=google_links)
@@ -1133,9 +1181,9 @@ def get_course_milestones(user_id, course_id):
 
     # Fetch completed quizzes in the course
     from sqlalchemy import func, distinct
-
+    student = Students.query.filter_by(user_id=user_id).first()
     completed_quizzes = db.session.query(func.count(distinct(Student_Progress.quiz_id))).join(Quizzes).filter(
-    Student_Progress.student_id == user_id,
+    Student_Progress.student_id == student.id,
     Student_Progress.action == 'complete',
     Quizzes.courses_id == course_id
 ).scalar()
@@ -1157,9 +1205,10 @@ def get_course_milestones(user_id, course_id):
 
 @app.route('/strengths/weakness/<int:user_id>')
 def analyze_strengths_weaknesses(user_id):
+    student = Students.query.filter_by(user_id=user_id).first()
     results = (
         db.session.query(Student_Progress.topic, db.func.avg(Student_Progress.score).label('avg_score'))
-        .filter(Student_Progress.student_id == user_id)
+        .filter(Student_Progress.student_id == student.id)
         .group_by(Student_Progress.topic)
         .all()
     )
@@ -1176,7 +1225,7 @@ def recommend_content(user_id):
     strengths = analysis['strengths']
     weaknesses = analysis['weaknesses']
    
-
+    student = Students.query.filter_by(user_id=user_id).first()
     # Query quizzes for weak areas
     weak_recommendations = db.session.query(
         Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Student_Progress.score
@@ -1189,7 +1238,7 @@ def recommend_content(user_id):
     strong_recommendations = db.session.query(
         Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Student_Progress.score
     ).join(Student_Progress, Student_Progress.quiz_id == Quizzes.quiz_id).filter(
-        Student_Progress.student_id == user_id,
+        Student_Progress.student_id == student.id,
         Student_Progress.score > 75  # Threshold for strong performance
     ).all()
 
