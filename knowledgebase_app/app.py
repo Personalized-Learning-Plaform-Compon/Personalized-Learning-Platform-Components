@@ -285,7 +285,7 @@ def course_progress(course_id):
     # Get the current student instance
     student = Students.query.filter_by(user_id=current_user.id).first()
     # Check if progress exists
-    progress = Student_Progress.query.filter_by(student_id=student.id).first()
+    progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
     if not progress:
         progress = Student_Progress(
             student_id=student.id,
@@ -295,6 +295,7 @@ def course_progress(course_id):
             time_spent=0,
             action="",
             attempt_date=datetime.now(),
+            course_id=course_id
         )
         db.session.add(progress)
         db.session.commit() 
@@ -548,7 +549,7 @@ def course_page(course_id):
         recs = fetch_google_sites('python challenges')
         google_links = [(i['url'], i['title']) for i in recs]
 
-    progress = Student_Progress.query.filter_by(student_id=student.id).first()
+    progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
     if not progress:
         progress = Student_Progress(
             student_id=student.id,
@@ -558,6 +559,7 @@ def course_page(course_id):
             time_spent=0,
             action="",
             attempt_date=datetime.now(),
+            course_id=course_id
         )
         db.session.add(progress)
         db.session.commit() 
