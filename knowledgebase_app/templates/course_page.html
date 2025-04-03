@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <!-- Understanding Rating -->
     <div class="mt-4">
         <label class="block font-medium text-gray-700">How well do you understand these topics?</label>
-        <div class="flex space-x-2 mt-2">
+        <div class="mt-4 flex justify-center text-yellow-500 text-2xl space-x-1">
             <button class="rating-star text-gray-400 text-2xl" data-value="1">⭐</button>
             <button class="rating-star text-gray-400 text-2xl" data-value="2">⭐</button>
             <button class="rating-star text-gray-400 text-2xl" data-value="3">⭐</button>
@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <!-- Topic Interest Selection -->
     <div class="mt-4">
         <label class="block font-medium text-gray-700">Which topics do you want to explore more?</label>
-        <div class="flex flex-wrap gap-2 mt-2">
+        <div class="flex justify-center gap-2 mt-2">
             {% for folder in course.folders %}
             <button class="interest-btn bg-gray-300 text-gray-700 px-3 py-1 rounded-lg"
                     data-topic="{{ folder.name }}">
