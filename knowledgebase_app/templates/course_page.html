@@ -67,30 +67,24 @@
 
             </div>
             <script>
-    
-document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() { 
     fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
         .then(response => response.json())
         .then(data => {
-            console.log("Fetched quiz progress:", data);
+            console.log("Fetched competency progress:", data);
 
-            // Get progress elements
             let progressCircle = document.getElementById("progress-circle");
             let progressText = document.getElementById("progress-text");
 
-            // Ensure the percentage is between 0-100
+            // Ensure percentage stays within valid range
             let progress = Math.min(Math.max(data.completion_percentage, 0), 100);
             
-            // Calculate stroke-dashoffset for circular progress
+            // Adjust circular progress
             let dashOffset = 251.2 - (progress * 2.512);
-
-            // Update progress circle
             progressCircle.style.strokeDashoffset = dashOffset;
-
-            // Update text inside the progress circle
             progressText.innerText = progress + "%";
 
-            // Show Milestone Badges
+            // Show milestone badges based on competencies
             if (progress >= 100) {
                 document.getElementById("milestone-100").classList.remove("hidden");
             } else if (progress >= 75) {
@@ -100,14 +94,16 @@ document.addEventListener("DOMContentLoaded", function() {
             } else if (progress >= 25) {
                 document.getElementById("milestone-25").classList.remove("hidden");
             }
-            // Star Rating System
-            let stars = Math.floor(progress / 20); // 1 star per 20% progress
+
+            // Star rating system based on competency completion
+            let stars = Math.floor(progress / 20);
             for (let i = 1; i <= stars; i++) {
                 document.getElementById("star-" + i).classList.remove("hidden");
             }
         })
-        .catch(error => console.error("Error fetching quiz progress:", error));
+        .catch(error => console.error("Error fetching competency progress:", error));
 });
+
 </script>
 
             <!-- Course Overview -->
@@ -161,8 +157,8 @@ document.addEventListener("DOMContentLoaded", function() {
       <div class="bg-white p-4 rounded-lg shadow-md">
           <div class="flex justify-between items-center mb-3">
               <div>
-                  <h4 class="text-left text-lg font-semibold text-gray-800">{{ competency }}</h4>
-                  <p class="text-gray-600 text-sm">Test your understanding of {{ competency }}!</p>
+                  <h4 class="text-align text-lg font-semibold text-gray-800">{{ competency }}</h4>
+                  <!-- <p class="text-gray-600 text-sm">Test your understanding of {{ competency }}!</p> -->
               </div>
           </div>
           
@@ -183,154 +179,142 @@ document.addEventListener("DOMContentLoaded", function() {
 </div>
 
 <script>
-  function generateQuiz(topic) {
-    // Find the container for this specific topic's quiz
-    const quizContainer = document.querySelector(`div[id^="quiz-"]`);
+    document.addEventListener("DOMContentLoaded", function () {
+        const courseId = {{ course.id|tojson }};
     
-    // Show loading indicator
-    quizContainer.innerHTML = `
-        <div class="flex items-center justify-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-            <span class="ml-2">Generating quiz for ${topic}...</span>
-        </div>
-    `;
-    
-    // Make AJAX request to generate quiz
-    fetch('/generate_quiz', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            quiz_topic: topic
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Render quiz questions
-        renderQuiz(quizContainer, data.quiz_questions, topic);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        quizContainer.innerHTML = `
-            <div class="text-red-500">Failed to generate quiz. Please try again.</div>
-        `;
-    });
-  }
-  
-  function renderQuiz(container, questions, topic) {
-    // Clear previous content
-    container.innerHTML = '';
-    
-    // Create quiz form
-    const quizForm = document.createElement('form');
-    quizForm.id = `quiz-form-${topic.replace(/\s+/g, '-')}`;
-    
-    // Render each question
-    questions.forEach((question, index) => {
-        const questionDiv = document.createElement('div');
-        questionDiv.className = 'mb-4 p-4 bg-white rounded-lg shadow-md';
-        
-        // Question text
-        const questionText = document.createElement('h4');
-        questionText.className = 'font-semibold mb-2';
-        questionText.textContent = `${index + 1}. ${question.question}`;
-        questionDiv.appendChild(questionText);
-        
-        // Choices
-        question.choices.forEach((choice, choiceIndex) => {
-            const choiceDiv = document.createElement('div');
-            choiceDiv.className = 'flex items-center mb-2';
+        function generateQuiz(topic) {
+            const quizContainer = document.querySelector(`div[id^="quiz-"]`);
             
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = `question-${index}`;
-            radio.value = choiceIndex;
-            radio.id = `q${index}-choice${choiceIndex}`;
-            radio.className = 'mr-2';
-            
-            const label = document.createElement('label');
-            label.htmlFor = `q${index}-choice${choiceIndex}`;
-            label.textContent = choice;
-            
-            choiceDiv.appendChild(radio);
-            choiceDiv.appendChild(label);
-            questionDiv.appendChild(choiceDiv);
-        });
-        
-        quizForm.appendChild(questionDiv);
-    });
+            quizContainer.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <span class="ml-2">Generating quiz for ${topic}...</span>
+                </div>
+            `;
     
-    // Submit button
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = 'Submit Quiz';
-    submitBtn.className = 'bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition';
-    submitBtn.onclick = (e) => {
-        e.preventDefault();
-        submitQuiz(quizForm, questions, topic);
-    };
-    
-    quizForm.appendChild(submitBtn);
-    container.appendChild(quizForm);
-  }
-  
-  function submitQuiz(form, questions, topic) {
-    const userAnswers = [];
-    let score = 0;
-    
-    questions.forEach((question, index) => {
-        const selectedOption = form.querySelector(`input[name="question-${index}"]:checked`);
-        
-        if (selectedOption) {
-            const userChoice = parseInt(selectedOption.value);
-            const isCorrect = userChoice === question.correct_answer;
-            
-            userAnswers.push({
-                question_id: `q_${index}`,
-                was_correct: isCorrect,
-                difficulty: question.difficulty || 'Medium'
+            fetch('/generate_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quiz_topic: topic })
+            })
+            .then(response => response.json())
+            .then(data => {
+                renderQuiz(quizContainer, data.quiz_questions, topic, courseId);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                quizContainer.innerHTML = `<div class="text-red-500">Failed to generate quiz. Please try again.</div>`;
             });
-            
-            if (isCorrect) score++;
         }
-    });
     
-    const scorePercentage = Math.round((score / questions.length) * 100);
+        function renderQuiz(container, questions, topic, courseId) {
+            container.innerHTML = '';
+            
+            const quizForm = document.createElement('form');
+            quizForm.id = `quiz-form-${topic.replace(/\s+/g, '-')}`;
+            quizForm.dataset.courseId = courseId;  // Store course ID
     
-    // Submit results to server
-    fetch('/submit_quiz', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            topic: questions[0].topic || 'Unknown Topic',
-            score: scorePercentage,
-            questions: questions,
-            user_answers: userAnswers
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(`Quiz submitted! Your score: ${scorePercentage}%`);
-        
-        // Re-enable the "Generate Quiz" button
-        form.innerHTML = `
-            <button onclick="generateQuiz('${topic}')" 
-               class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                Generate New Adaptive Quiz
-            </button>
-        `;
-    })
-    .catch(error => {
-        console.error('Error submitting quiz:', error);
-        alert('Failed to submit quiz. Please try again.');
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'mb-4 p-4 bg-white rounded-lg shadow-md';
+                
+                const questionText = document.createElement('h4');
+                questionText.className = 'font-semibold mb-2';
+                questionText.textContent = `${index + 1}. ${question.question}`;
+                questionDiv.appendChild(questionText);
+                
+                question.choices.forEach((choice, choiceIndex) => {
+                    const choiceDiv = document.createElement('div');
+                    choiceDiv.className = 'flex items-center mb-2';
+                    
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `question-${index}`;
+                    radio.value = choiceIndex;
+                    radio.id = `q${index}-choice${choiceIndex}`;
+                    radio.className = 'mr-2';
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `q${index}-choice${choiceIndex}`;
+                    label.textContent = choice;
+                    
+                    choiceDiv.appendChild(radio);
+                    choiceDiv.appendChild(label);
+                    questionDiv.appendChild(choiceDiv);
+                });
+                
+                quizForm.appendChild(questionDiv);
+            });
+    
+            const submitBtn = document.createElement('button');
+            submitBtn.textContent = 'Submit Quiz';
+            submitBtn.className = 'bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition';
+            submitBtn.onclick = (e) => {
+                e.preventDefault();
+                submitQuiz(quizForm, questions, topic, courseId);
+            };
+    
+            quizForm.appendChild(submitBtn);
+            container.appendChild(quizForm);
+        }
+    
+        function submitQuiz(form, questions, topic, courseId) {
+            const userAnswers = [];
+            let score = 0;
+    
+            questions.forEach((question, index) => {
+                const selectedOption = form.querySelector(`input[name="question-${index}"]:checked`);
+                
+                if (selectedOption) {
+                    const userChoice = parseInt(selectedOption.value);
+                    const isCorrect = userChoice === question.correct_answer;
+    
+                    userAnswers.push({
+                        question_id: `q_${index}`,
+                        was_correct: isCorrect,
+                        difficulty: question.difficulty || 'Medium'
+                    });
+                    
+                    if (isCorrect) score++;
+                }
+            });
+    
+            const scorePercentage = Math.round((score / questions.length) * 100);
+    
+            fetch('/submit_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topic: questions[0].topic || 'Unknown Topic',
+                    score: scorePercentage,
+                    questions: questions,
+                    user_answers: userAnswers,
+                    course_id: courseId  // Send course ID to backend
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(`Quiz submitted! Your score: ${scorePercentage}%`);
+                
+                form.innerHTML = `
+                    <button onclick="generateQuiz('${topic}')" 
+                       class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                        Generate New Adaptive Quiz
+                    </button>
+                `;
+            })
+            .catch(error => {
+                console.error('Error submitting quiz:', error);
+                alert('Failed to submit quiz. Please try again.');
+            });
+        }
+    
+        window.generateQuiz = generateQuiz;
     });
-  }
   </script>
-</script>
+  
 
 <div class="recommendations-container mt-10">
     <h2 class="text-2xl font-semibold text-center mb-4">Personalized Content Recommendations</h2>

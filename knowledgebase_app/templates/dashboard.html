@@ -19,8 +19,9 @@
               <div id="progress-fill-{{ course.id }}" class="progress-fill"></div>
             </div>
             
-            <p><strong>Completed:</strong> <span id="completed-quizzes-{{ course.id }}">0</span> / <span id="total-quizzes-{{ course.id }}">0</span></p>
+            <p><strong>Completed:</strong> <span id="completed-competencies-{{ course.id }}">0</span> / <span id="total-competencies-{{ course.id }}">0</span></p>
             <p><strong>Progress:</strong> <span id="progress-percentage-{{ course.id }}">0%</span></p>
+
           </div>
         </div>
       {% endfor %}
@@ -33,34 +34,20 @@
 <a href="{{ url_for('courses') }}" class="bg-red-500 text-white px-4 py-2 rounded-lg mt-6 inline-block">Add Course</a>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function() {
     {% for course in courses %}
-
-    fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
+    fetch("/milestones/{{ current_user.id }}/{{ course[0].id }}")
         .then(response => response.json())
         .then(data => {
-            document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
-            document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
-            document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
-            // Adjust progress bar width
-            document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
+            console.log("Fetched competency progress for course {{ course[0].id }}:", data);
+
+            document.getElementById("completed-competencies-{{ course[0].id }}").innerText = data.completed_competencies;
+            document.getElementById("total-competencies-{{ course[0].id }}").innerText = data.total_competencies;
+            document.getElementById("progress-percentage-{{ course[0].id }}").innerText = data.completion_percentage + "%";
+            document.getElementById("progress-fill-{{ course[0].id }}").style.width = data.completion_percentage + "%";
         })
         .catch(error => console.error("Error fetching milestone data:", error));
     {% endfor %}
-    
-  {% for course, teacher in courses %}
-  console.log("Fetching data from /milestones/{{ current_user.id }}/{{ course.id }}");
-  fetch("/milestones/{{ current_user.id }}/{{ course.id }}")
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById("completed-quizzes-{{ course.id }}").innerText = data.completed_quizzes;
-      document.getElementById("total-quizzes-{{ course.id }}").innerText = data.total_quizzes;
-      document.getElementById("progress-percentage-{{ course.id }}").innerText = data.completion_percentage + "%";
-      document.getElementById("progress-fill-{{ course.id }}").style.width = data.completion_percentage + "%";
-    
-})
-    .catch(error => console.error("Error fetching milestone data:", error));
-  {% endfor %}
 });
 </script>
 
@@ -137,41 +124,6 @@ document.addEventListener("DOMContentLoaded", function() {
 </style>
 
 
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    fetch("/recommendations/{{ current_user.id }}")
-        .then(response => response.json())
-        .then(data => {
-            updateRecommendations("weak-recommendations", data.weak_areas_quizzes);
-            updateRecommendations("strong-recommendations", data.strong_areas_quizzes);
-        })
-        .catch(error => console.error("Error fetching recommendations:", error));
-
-    function updateRecommendations(containerId, quizzes) {
-        const list = document.getElementById(containerId);
-        list.innerHTML = quizzes.length ? "" : "<li>No recommendations available.</li>";
-
-        quizzes.forEach(quiz => {
-            let item = document.createElement("li");
-            item.innerHTML = `
-                <div class="quiz-card">
-                    <p><strong>Topic:</strong> ${quiz.topic}</p>
-                    <p><strong>Quiz ID:</strong> ${quiz.quiz_id}</p>
-                    <span class="difficulty-tag ${quiz.difficulty.toLowerCase()}">${quiz.difficulty}</span>
-                    <button class="start-quiz" onclick="startQuiz(${quiz.quiz_id})">Start Quiz</button>
-                </div>
-            `;
-            list.appendChild(item);
-        });
-    }
-});
-
-function startQuiz(quizId) {
-    window.location.href = `/quiz/${quizId}`;
-}
-</script>
 
 <style>
 .recommendations-container {
