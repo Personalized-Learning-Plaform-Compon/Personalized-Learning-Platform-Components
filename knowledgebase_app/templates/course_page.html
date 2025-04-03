@@ -132,6 +132,99 @@
                 </div>
             {% endif %}
 
+            <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+    <h3 class="text-xl font-semibold text-gray-800">📊 Share Your Feedback</h3>
+    <p class="text-gray-600">Rate your understanding and select topics you'd like more help with.</p>
+
+    <!-- Understanding Rating -->
+    <div class="mt-4">
+        <label class="block font-medium text-gray-700">How well do you understand these topics?</label>
+        <div class="mt-4 flex justify-center text-yellow-500 text-2xl space-x-1">
+            <button class="rating-star text-gray-400 text-2xl" data-value="1">⭐</button>
+            <button class="rating-star text-gray-400 text-2xl" data-value="2">⭐</button>
+            <button class="rating-star text-gray-400 text-2xl" data-value="3">⭐</button>
+            <button class="rating-star text-gray-400 text-2xl" data-value="4">⭐</button>
+            <button class="rating-star text-gray-400 text-2xl" data-value="5">⭐</button>
+        </div>
+        <p id="rating-label" class="mt-2 text-lg font-semibold text-gray-700"></p>
+
+    </div>
+
+    <!-- Topic Interest Selection -->
+    <div class="mt-4">
+        <label class="block font-medium text-gray-700">Which topics do you want to explore more?</label>
+        <div class="flex justify-center gap-2 mt-2">
+            {% for folder in course.folders %}
+            <button class="interest-btn bg-gray-300 text-gray-700 px-3 py-1 rounded-lg"
+                    data-topic="{{ folder.name }}">
+                {{ folder.name }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Submit Feedback Button -->
+    <button id="submit-feedback" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+        Submit Feedback
+    </button>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedRating = 0;
+    let selectedTopics = [];
+
+    // Star Rating Event
+    document.querySelectorAll(".rating-star").forEach(star => {
+        star.addEventListener("click", function () {
+            selectedRating = this.getAttribute("data-value");
+            document.getElementById("rating-label").innerText = `You rated: ${selectedRating} stars ⭐`;
+            document.querySelectorAll(".rating-star").forEach(s => s.classList.remove("text-yellow-500"));
+             s.classList.add("text-gray-400");
+            for (let i = 0; i < selectedRating; i++) {
+                document.querySelectorAll(".rating-star")[i].classList.add("text-yellow-500");
+            }
+        });
+    });
+
+    // Topic Interest Selection Event
+    document.querySelectorAll(".interest-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            let topic = this.getAttribute("data-topic");
+            if (selectedTopics.includes(topic)) {
+                selectedTopics = selectedTopics.filter(t => t !== topic);
+                this.classList.remove("bg-blue-500", "text-white");
+                this.classList.add("bg-gray-300", "text-gray-700");
+            } else {
+                selectedTopics.push(topic);
+                this.classList.add("bg-blue-500", "text-white");
+                this.classList.remove("bg-gray-300", "text-gray-700");
+            }
+        });
+    });
+
+    // Submit Feedback Event
+    document.getElementById("submit-feedback").addEventListener("click", function () {
+        fetch("/submit_feedback", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                course_id: "{{ course.id }}",
+                user_id: "{{ current_user.id }}",
+                rating: selectedRating,
+                topics_of_interest: selectedTopics
+            })
+        })
+        .then(response => response.json())
+        .then(data => alert("Feedback submitted! Thank you."))
+        .catch(error => console.error("Error submitting feedback:", error));
+    });
+});
+</script>
+
+
+
             <!-- AI Tutor Section  -->
             <div class="bg-blue-50 p-6 rounded-lg shadow-md flex flex-col items-center">
                 <h3 class="text-2xl font-semibold text-blue-700">Talk to an AI Tutor</h3>
@@ -406,7 +499,6 @@
             <p><strong>Topic:</strong> ${quiz.topic}</p>
             <p><strong>Quiz ID:</strong> ${quiz.quiz_id}</p>
             <span class="difficulty-tag ${quiz.difficulty.toLowerCase()}">${quiz.difficulty}</span>
-            <button class="start-quiz" onclick="startQuiz(${quiz.quiz_id})">Start Quiz</button>
           </div>
         `;
         list.appendChild(item);
@@ -414,9 +506,8 @@
     }
   });
   
-  function startQuiz(quizId) {
-    window.location.href = `/quiz/${quizId}`;
-  }
+
+  
   </script>
 
   <style>
@@ -445,6 +536,37 @@
   background: rgb(190, 191, 243);
   width: 300px;
   text-align: center;
+}
+
+.quiz-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid #ff5f57;
+    margin-bottom: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.difficulty-tag {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    text-transform: capitalize;
+}
+
+.difficulty-tag.easy { background-color: #4CAF50; }
+.difficulty-tag.medium { background-color: rgb(248, 158, 48); }
+.difficulty-tag.hard { background-color: #f44336; }
+
+.rating-star:hover {
+    transform: scale(1.2);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
 }
 
 

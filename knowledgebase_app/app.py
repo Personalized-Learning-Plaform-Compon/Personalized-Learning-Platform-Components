@@ -16,7 +16,7 @@ from sqlalchemy import func, distinct
 import openai 
 from openai import OpenAI
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent
+from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent, CourseFeedback
 from recommendations import fetch_youtube_videos, fetch_google_sites
 from supabase import create_client, Client
 from sqlalchemy.orm.attributes import flag_modified
@@ -1400,6 +1400,22 @@ def balanced_recommendations(student_id):
         "reinforcement quizzes": weak_quizzes,
         "advanced_engagement quizzes": strong_quizzes
     })
+
+@app.route("/submit_feedback", methods=["POST"])
+@login_required
+def submit_feedback():
+    data = request.json
+    course_id = data.get("course_id")
+    rating = data.get("rating")
+    topics_of_interest = data.get("topics_of_interest")
+    user_id = current_user.id  
+
+    feedback = CourseFeedback(user_id=user_id, course_id=course_id, rating=rating, topics_of_interest=topics_of_interest)
+    db.session.add(feedback)
+    db.session.commit()
+
+    return jsonify({"message": "Feedback saved!"}), 200
+
 
 
 if __name__ == "__main__":
