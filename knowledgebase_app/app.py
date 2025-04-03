@@ -1326,16 +1326,16 @@ def balanced_recommendations(student_id):
         "advanced_engagement quizzes": strong_quizzes
     })
 
-@app.route("/submit_feedback/<int:user_id>/<int:course_id>", methods=["POST"])
+@app.route("/submit_feedback", methods=["POST"])
 @login_required
-def submit_feedback(user_id, course_id):
+def submit_feedback():
     data = request.json
-    course_id = course_id
-    user_id = user_id
+    course_id = data.get("course_id")
     rating = data.get("rating")
     topics_of_interest = data.get("topics_of_interest")
+    user_id = current_user.id  
 
-    feedback = CourseFeedback(student_id=user_id, course_id=course_id, rating=rating, topics_of_interest=topics_of_interest)
+    feedback = CourseFeedback(user_id=user_id, course_id=course_id, rating=rating, topics_of_interest=topics_of_interest)
     db.session.add(feedback)
     db.session.commit()
 

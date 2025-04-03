@@ -176,9 +176,9 @@ class CourseFeedback(db.Model):
     __tablename__ = 'course_feedback'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     # user_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
-    topics_of_interest = db.Column(db.Text, nullable=False)
+    topics_of_interest = db.Column(db.Text, nullable=True)

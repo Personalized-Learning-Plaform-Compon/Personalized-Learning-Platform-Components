@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <!-- Understanding Rating -->
     <div class="mt-4">
-        <label class="block font-medium text-gray-700">How well do you understand this topic?</label>
+        <label class="block font-medium text-gray-700">How well do you understand these topics?</label>
         <div class="flex space-x-2 mt-2">
             <button class="rating-star text-gray-400 text-2xl" data-value="1">⭐</button>
             <button class="rating-star text-gray-400 text-2xl" data-value="2">⭐</button>
@@ -150,6 +150,8 @@ document.addEventListener("DOMContentLoaded", function() {
             <button class="rating-star text-gray-400 text-2xl" data-value="4">⭐</button>
             <button class="rating-star text-gray-400 text-2xl" data-value="5">⭐</button>
         </div>
+        <p id="rating-label" class="mt-2 text-lg font-semibold text-gray-700"></p>
+
     </div>
 
     <!-- Topic Interest Selection -->
@@ -179,7 +181,9 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".rating-star").forEach(star => {
         star.addEventListener("click", function () {
             selectedRating = this.getAttribute("data-value");
+            document.getElementById("rating-label").innerText = `You rated: ${selectedRating} stars ⭐`;
             document.querySelectorAll(".rating-star").forEach(s => s.classList.remove("text-yellow-500"));
+             s.classList.add("text-gray-400");
             for (let i = 0; i < selectedRating; i++) {
                 document.querySelectorAll(".rating-star")[i].classList.add("text-yellow-500");
             }
@@ -575,6 +579,11 @@ document.addEventListener("DOMContentLoaded", function () {
 .difficulty-tag.medium { background-color: rgb(248, 158, 48); }
 .difficulty-tag.hard { background-color: #f44336; }
 
+.rating-star:hover {
+    transform: scale(1.2);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+}
 
 
 {% endblock %}
