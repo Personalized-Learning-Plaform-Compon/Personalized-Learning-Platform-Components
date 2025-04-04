@@ -192,6 +192,7 @@ def profile():
     form = StudentProfileForm()
     
     return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+
 @app.route('/update_learning_style', methods=['POST'])
 @login_required
 def update_learning_style():
@@ -1417,6 +1418,58 @@ def submit_feedback():
 
     return jsonify({"message": "Feedback saved!"}), 200
 
+
+@app.route("/course/<int:course_id>/students")
+@login_required
+def view_students(course_id):
+    # Get the teacher associated with the logged-in user
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    if not teacher:
+        flash("You are not authorized to view this page.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Check if the teacher owns the course
+    course = Courses.query.filter_by(id=course_id, teacher_id=teacher.id).first()
+    if not course:
+        flash("You do not have permission to view students for this course.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Get students enrolled in this course
+    enrolled_students = (
+        db.session.query(Students)
+        .join(CourseEnrollment, Students.id == CourseEnrollment.student_id)
+        .filter(CourseEnrollment.course_id == course_id)
+        .order_by(Students.name.asc())
+        .all()
+    )
+
+    return render_template("view_students.html", course=course, students=enrolled_students)
+
+@app.route('/course/<int:course_id>/students/student_profile/<int:student_id>')
+@login_required
+def student_profile(course_id, student_id):
+    if current_user.user_type != 'teacher':
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Fetch the course to ensure it exists and the teacher has access
+    course = Courses.query.filter_by(id=course_id).first()
+    if not course:
+        flash("Course not found.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Fetch the student
+    student = Students.query.filter_by(id=student_id).first()
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for('view_students', course_id=course_id))
+
+    # Fetch the student progress
+    progress = Student_Progress.query.filter_by(student_id=student_id, course_id=course_id).first()
+    
+    competencies = progress.python_intro_competencies if progress else None
+    
+    return render_template('student_profile.html', user=student.user_id, student=student, course=course, competencies=competencies)
 
 
 if __name__ == "__main__":
