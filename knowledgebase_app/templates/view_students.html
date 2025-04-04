@@ -5,47 +5,47 @@
     <h1 class="text-2xl font-bold text-gray-800 mb-4">Students Enrolled in {{ course.name }}</h1>
 
     {% if students %}
-        <ul class="bg-white shadow-md rounded-lg p-4 space-y-14">
-            {% for student in students %}
-                <li class="flex justify-between items-center border-b last:border-none py-12 px-4">
-                    <!-- Student Name -->
-                    <span id="user-id-{{ student.id }}" data-user-id="{{ student.user_id }}" class="font-medium text-lg text-gray-800 hover:underline student-name cursor-pointer">
-                        {{ student.name }}
-                    </span>
-
-                    <!-- Tooltip Box -->
-                    <a href="{{ url_for('student_profile', course_id=course.id, student_id=student.id) }}" 
-                    class="absolute left-0 top-full mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-300 tooltip hidden">
-                        <div class="flex items-center">
-                            <div>
-                                <p><strong>{{ student.name }}</strong></p>
-                                <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
-                                <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
-                            </div>
-
-                            <!-- Progress Circle -->
-                            <div class="relative w-6 h-6 flex-shrink-0 ml-4">
-                                <svg height="150" width="150" viewBox="0 0 100 100">
-                                    <circle class="text-gray-300" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"></circle>
-                                    <!-- Dynamic Progress Circle -->
-                                    <circle id="progress-circle-{{ student.id }}" class="text-blue-500" stroke-width="6" stroke="currentColor" fill="transparent" 
-                                        r="40" cx="50" cy="50"
-                                        stroke-dasharray="251.2"
-                                        stroke-dashoffset="251.2"
-                                        stroke-linecap="round">
-                                    </circle>
-                                </svg>
-                                <!-- Progress Percentage Display -->
-                                <span id="progress-text-{{ student.id }}" 
-                                    class="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-gray-800">
-                                    0%
-                                </span>
-                            </div>
+    <ul class="bg-white shadow-md rounded-lg p-4 space-y-14">
+        {% for student in students %}
+            <li class="flex justify-center items-center border-b last:border-none py-12 px-4"> <!-- Changed justify-between to justify-center -->
+                <!-- Student Name -->
+                <span id="user-id-{{ student.id }}" data-user-id="{{ student.user_id }}" class="font-medium text-lg text-gray-800 hover:underline student-name cursor-pointer text-center">
+                    {{ student.name }}
+                </span>
+    
+                <!-- Tooltip Box -->
+                <a href="{{ url_for('student_profile', course_id=course.id, student_id=student.id) }}" 
+                   class="absolute left-0 top-full mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-300 tooltip hidden">
+                    <div class="flex items-center">
+                        <div>
+                            <p><strong>{{ student.name }}</strong></p>
+                            <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
+                            <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
                         </div>
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
+    
+                        <!-- Progress Circle -->
+                        <div class="relative w-6 h-6 flex-shrink-0 ml-4">
+                            <svg height="150" width="150" viewBox="0 0 100 100">
+                                <circle class="text-gray-300" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"></circle>
+                                <!-- Dynamic Progress Circle -->
+                                <circle id="progress-circle-{{ student.id }}" class="text-blue-500" stroke-width="6" stroke="currentColor" fill="transparent" 
+                                    r="40" cx="50" cy="50"
+                                    stroke-dasharray="251.2"
+                                    stroke-dashoffset="251.2"
+                                    stroke-linecap="round">
+                                </circle>
+                            </svg>
+                            <!-- Progress Percentage Display -->
+                            <span id="progress-text-{{ student.id }}" 
+                                class="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-gray-800">
+                                0%
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
     {% else %}
         <p class="text-gray-600">No students are enrolled in this course yet.</p>
     {% endif %}
