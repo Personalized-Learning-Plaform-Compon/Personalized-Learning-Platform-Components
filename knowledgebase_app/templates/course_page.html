@@ -274,10 +274,10 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const courseId = {{ course.id|tojson }};
-    
+        let quizStartTime = null; 
         function generateQuiz(topic) {
             const quizContainer = document.querySelector(`div[id^="quiz-"]`);
-            
+            quizStartTime = Date.now(); 
             quizContainer.innerHTML = `
                 <div class="flex items-center justify-center">
                     <div class="spinner-border text-primary" role="status">
@@ -356,7 +356,9 @@ document.addEventListener("DOMContentLoaded", function () {
         function submitQuiz(form, questions, topic, courseId) {
             const userAnswers = [];
             let score = 0;
-    
+            let quizEndTime = Date.now();
+            let durationInSeconds = Math.floor((quizEndTime - quizStartTime) / 1000); 
+
             questions.forEach((question, index) => {
                 const selectedOption = form.querySelector(`input[name="question-${index}"]:checked`);
                 
@@ -384,7 +386,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     score: scorePercentage,
                     questions: questions,
                     user_answers: userAnswers,
-                    course_id: courseId  // Send course ID to backend
+                    course_id: courseId,  
+                    duration: durationInSeconds
                 })
             })
             .then(response => response.json())

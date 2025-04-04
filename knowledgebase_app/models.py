@@ -84,7 +84,7 @@ class Quizzes(db.Model):
     content = db.Column(db.JSON, default={}, nullable=False)
     tags = db.Column(db.JSON, default={})
     course = db.relationship('Courses', backref=db.backref('quizzes', lazy=True))
-    progress = db.relationship('Student_Progress', backref=db.backref('quizzes'), lazy = True)
+    progress = db.relationship('Student_Progress', backref=db.backref('quizzes'), lazy = True, overlaps="progress,quizzes")
     
 class Student_Progress(db.Model):
     __tablename__ = 'student_progress'
@@ -98,7 +98,7 @@ class Student_Progress(db.Model):
     time_spent = db.Column(db.Integer, nullable=False)
     action = db.Column(db.String(255)) #complete, review, start
     attempt_date = db.Column(db.DateTime, nullable=False)
-    quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy='joined') )
+    quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy='joined'), overlaps="progress,quizzes")
     python_intro_competencies = db.Column(MutableDict.as_mutable(db.JSON), default={
         'compilation and execution': ('None', 0),
         'binary': ('None', 0),

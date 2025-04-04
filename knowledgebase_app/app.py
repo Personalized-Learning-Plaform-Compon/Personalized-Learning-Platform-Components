@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests
 import re
@@ -1101,6 +1101,7 @@ def submit_quiz():
         questions = data.get('questions')
         course_id = data.get('course_id')
         user_answers = data.get('user_answers')
+        duration = data.get('duration')
         
         # Get the current student
         student = Students.query.filter_by(user_id=current_user.id).first()
@@ -1115,7 +1116,7 @@ def submit_quiz():
             content=questions,
             courses_id=course_id,
             attempt_date=datetime.now(),
-            time_spent=0,
+            time_spent=duration,
             student_id=student.id,
         )
         db.session.add(quiz_result)
