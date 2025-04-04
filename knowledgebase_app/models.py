@@ -75,13 +75,17 @@ class Quizzes(db.Model):
     __tablename__ = 'quizzes'
     courses_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     quiz_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     topic = db.Column(db.String(255), nullable=False)
     difficulty = db.Column(db.Enum('Easy', 'Medium', 'Hard', name="difficulty_enum"), nullable=False)
     format = db.Column(db.Enum('MCQ', 'Essay', 'True/False', 'Fill-in-the-blank', name="quiz_format_enum"), nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    attempt_date = db.Column(db.DateTime, nullable=False)
+    time_spent = db.Column(db.Integer, nullable=False)
+    score = db.Column(db.Numeric(5, 2), nullable=False)
+    content = db.Column(db.JSON, default={}, nullable=False)
     tags = db.Column(db.JSON, default={})
     course = db.relationship('Courses', backref=db.backref('quizzes', lazy=True))
-    progress = db.relationship('Student_Progress', backref=db.backref('quizzes'), lazy = True)
+    progress = db.relationship('Student_Progress', backref=db.backref('quizzes'), lazy = True, overlaps="progress,quizzes")
     
 class Student_Progress(db.Model):
     __tablename__ = 'student_progress'
@@ -95,7 +99,7 @@ class Student_Progress(db.Model):
     time_spent = db.Column(db.Integer, nullable=False)
     action = db.Column(db.String(255)) #complete, review, start
     attempt_date = db.Column(db.DateTime, nullable=False)
-    quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy='joined') )
+    quiz = db.relationship('Quizzes', backref=db.backref('student_progress', lazy='joined'), overlaps="progress,quizzes")
     python_intro_competencies = db.Column(MutableDict.as_mutable(db.JSON), default={
         'compilation and execution': ('None', 0),
         'binary': ('None', 0),
@@ -173,3 +177,13 @@ class CourseContent(db.Model):
     file_extension = db.Column(db.String(255), nullable=True)
     vector_store_file_id = db.Column(db.String(512), nullable=True)
 
+class CourseFeedback(db.Model):
+    __tablename__ = 'course_feedback'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    # user_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    topics_of_interest = db.Column(db.Text, nullable=True)

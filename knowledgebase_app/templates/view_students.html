@@ -1,0 +1,127 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container mx-auto mt-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Students Enrolled in {{ course.name }}</h1>
+
+    {% if students %}
+    <ul class="bg-white shadow-md rounded-lg p-4 space-y-14">
+        {% for student in students %}
+            <li class="flex justify-center items-center border-b last:border-none py-12 px-4"> <!-- Changed justify-between to justify-center -->
+                <!-- Student Name -->
+                <span id="user-id-{{ student.id }}" data-user-id="{{ student.user_id }}" class="font-medium text-lg text-gray-800 hover:underline student-name cursor-pointer text-center">
+                    {{ student.name }}
+                </span>
+    
+                <!-- Tooltip Box -->
+                <a href="{{ url_for('student_profile', course_id=course.id, student_id=student.id) }}" 
+                   class="absolute left-0 top-full mt-2 w-64 bg-white shadow-lg rounded-lg p-4 border border-gray-300 tooltip hidden">
+                    <div class="flex items-center">
+                        <div>
+                            <p><strong>{{ student.name }}</strong></p>
+                            <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
+                            <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
+                        </div>
+    
+                        <!-- Progress Circle -->
+                        <div class="relative w-6 h-6 flex-shrink-0 ml-4">
+                            <svg height="150" width="150" viewBox="0 0 100 100">
+                                <circle class="text-gray-300" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"></circle>
+                                <!-- Dynamic Progress Circle -->
+                                <circle id="progress-circle-{{ student.id }}" class="text-blue-500" stroke-width="6" stroke="currentColor" fill="transparent" 
+                                    r="40" cx="50" cy="50"
+                                    stroke-dasharray="251.2"
+                                    stroke-dashoffset="251.2"
+                                    stroke-linecap="round">
+                                </circle>
+                            </svg>
+                            <!-- Progress Percentage Display -->
+                            <span id="progress-text-{{ student.id }}" 
+                                class="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-gray-800">
+                                0%
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        <p class="text-gray-600">No students are enrolled in this course yet.</p>
+    {% endif %}
+
+    <div class="mt-6 flex justify-center">
+        <a href="{{ url_for('manage_course', course_id=course.id) }}" 
+           class="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+            Back to Course Management
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const studentNames = document.querySelectorAll(".student-name");
+
+    studentNames.forEach((studentName) => {
+        const tooltip = studentName.nextElementSibling;
+        let hideTimeout; // Variable to store the timeout ID
+
+        studentName.addEventListener("mouseenter", () => {
+            clearTimeout(hideTimeout); // Clear any existing timeout to prevent premature hiding
+            tooltip.classList.remove("hidden");
+        });
+
+        studentName.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => {
+                tooltip.classList.add("hidden");
+            }, 200); // Add a 200ms delay before hiding the tooltip
+        });
+
+        tooltip.addEventListener("mouseenter", () => {
+            clearTimeout(hideTimeout); // Prevent hiding when the mouse enters the tooltip
+        });
+
+        tooltip.addEventListener("mouseleave", () => {
+            tooltip.classList.add("hidden"); // Hide the tooltip when the mouse leaves it
+        });
+    });
+});
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Loop through all students
+        const progressCircles = document.querySelectorAll("[id^='progress-circle-']");
+        progressCircles.forEach((circle) => {
+            const studentId = circle.id.split("-")[2]; // Extract student ID from the element's ID
+            const progressText = document.getElementById(`progress-text-${studentId}`);
+
+            // Fetch the user_id for the student (ensure this is available in your template)
+            const userId = document.getElementById(`user-id-${studentId}`).dataset.userId;
+
+            // Fetch progress for each student
+            fetch(`/milestones/${userId}/{{ course.id }}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch progress for student ${studentId}`);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    console.log(`Fetched progress for student ${studentId}:`, data);
+
+                    // Ensure percentage stays within valid range and fallback to 0 if undefined
+                    let progress = Math.min(Math.max(data.completion_percentage || 0, 0), 100);
+
+                    // Adjust circular progress
+                    let dashOffset = 251.2 - (progress * 2.512); // Calculate offset based on progress
+                    circle.style.strokeDashoffset = dashOffset;
+
+                    // Update progress percentage text
+                    progressText.innerText = progress + "%";
+                })
+                .catch((error) => console.error(`Error fetching progress for student ${studentId}:`, error));
+        });
+    });
+</script>
+{% endblock %}

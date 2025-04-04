@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests
 import re
@@ -16,9 +16,11 @@ from sqlalchemy import func, distinct
 import openai 
 from openai import OpenAI
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent 
+from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent, CourseFeedback
 from recommendations import fetch_youtube_videos, fetch_google_sites
 from supabase import create_client, Client
+from sqlalchemy.orm.attributes import flag_modified
+
 
 from generate_quiz import generate_quiz_from_openai
 
@@ -191,24 +193,6 @@ def profile():
     
     return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
 
-@app.route('/update_profile_details', methods=['POST'])
-@login_required
-def update_profile_details():
-    user = current_user
-    student = Students.query.filter_by(user_id=user.id).first()
-    if not student:
-        flash("Student not found.", "danger")
-        return redirect(url_for('profile'))
-
-    student.interests = request.form.get('interests')
-    student.classification = request.form.get('classification')
-    student.location = request.form.get('location')
-    db.session.commit()
-    flash("Profile details updated successfully.", "success")
-    return redirect(url_for('profile'))
-
-
-
 @app.route('/update_learning_style', methods=['POST'])
 @login_required
 def update_learning_style():
@@ -320,8 +304,10 @@ def course_progress(course_id):
         db.session.commit() 
 
     competencies = progress.python_intro_competencies
-    # competencies['binary'] = ('Familiar', 100)
-    # db.session.commit()
+    topics = [i.lower() for i in competencies.keys()]
+    for topic in topics:
+        update_progress(student, topic, progress)
+
     
     # Add any additional logic or data to pass to the template
     return render_template('course_progress.html', course=course, student=student, progress=progress, competencies=competencies)
@@ -351,6 +337,7 @@ def title_case_filter(text):
 def dashboard():
     user = current_user
     student = Students.query.filter_by(user_id=user.id).first()
+    
 
     if not student:
         flash('Student not found. Please try again.', 'danger')
@@ -530,7 +517,7 @@ def add_course():
 @login_required
 def course_page(course_id):
     # Query the course by ID
-    course = Courses.query.get(course_id)
+    course = Courses.query.get_or_404(course_id)
     student = Students.query.filter_by(user_id=current_user.id).first()
     if not course:
         flash("Course not found.", "danger")
@@ -1062,6 +1049,47 @@ def generate_quiz():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
+def update_progress(student, topic, progress, quiz=False):
+    """Update student progress based on quiz results"""
+    competencies = progress.python_intro_competencies
+    if quiz:
+        topic = topic.lower()
+        competencies[topic][1] += 1
+        if not student.learning_pace:
+            student.learning_pace = 'Normal'
+            db.session.commit()
+    
+    if student.learning_pace == 'Normal':
+        if competencies[topic][1] >= 3 and competencies[topic][1] < 6:
+            competencies[topic][0] = 'Familiarity'
+        elif competencies[topic][1] >= 6 and competencies[topic][1] < 9:
+            competencies[topic][0] = 'Competent'
+        elif competencies[topic][1] >= 9:
+            competencies[topic][0] = 'Mastery'
+    elif student.learning_pace == 'Fast':
+        if competencies[topic][1] >= 2 and competencies[topic][1] < 4:
+            competencies[topic][0] = 'Familiarity'
+        elif competencies[topic][1] >= 4 and competencies[topic][1] < 6:
+            competencies[topic][0] = 'Competent'
+        elif competencies[topic][1] >= 6:
+            competencies[topic][0] = 'Mastery'
+    else:
+        if competencies[topic][1] >= 4 and competencies[topic][1] < 8:
+            competencies[topic][0] = 'Familiarity'
+        elif competencies[topic][1] >= 8 and competencies[topic][1] < 12:
+            competencies[topic][0] = 'Competent'
+        elif competencies[topic][1] >= 12:
+            competencies[topic][0] = 'Mastery'
+    progress.python_intro_competencies = competencies
+    flag_modified(progress, "python_intro_competencies")
+    db.session.commit()
+   
+
+
+
 
 @app.route('/submit_quiz', methods=['POST'])
 @login_required
@@ -1072,27 +1100,49 @@ def submit_quiz():
         topic = data.get('topic')
         score = data.get('score')
         questions = data.get('questions')
+        course_id = data.get('course_id')
         user_answers = data.get('user_answers')
+        duration = data.get('duration')
         
         # Get the current student
         student = Students.query.filter_by(user_id=current_user.id).first()
         if not student:
             return jsonify({"error": "Student record not found"}), 404
         
-        # Create a quiz result record
-        quiz_result = QuizResult(
-            student_id=student.id,
+        quiz_result = Quizzes(
             topic=topic,
             score=score,
-            total_questions=len(questions)
+            difficulty='Medium',
+            format='MCQ',
+            content=questions,
+            courses_id=course_id,
+            attempt_date=datetime.now(),
+            time_spent=duration,
+            student_id=student.id,
         )
         db.session.add(quiz_result)
+        db.session.commit()
+        progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
+        # Update student progress
+        if score >= 60:
+            update_progress(student, topic, progress, True)
+            db.session.commit()
+        
+        
+        # Create a quiz result record
+        # quiz_result = QuizResult(
+        #     student_id=student.id,
+        #     topic=topic,
+        #     score=score,
+        #     total_questions=len(questions)
+        # )
+        # db.session.add(quiz_result)
         
         # Optionally, update student's performance metrics
         # This is a placeholder - implement your own logic
-        student.update_performance(topic, score)
+        #student.update_performance(topic, score)
         
-        db.session.commit()
+        #db.session.commit()
         
         return jsonify({
             "success": True, 
@@ -1130,7 +1180,7 @@ def generate_initial_questions(quiz_topic, count=5):
     questions = []
     
     # Use OpenAI to generate questions with difficulty parameter
-    openai_questions = generate_quiz_from_openai_with_difficulty(quiz_topic, 'Easy', count)
+    openai_questions = generate_quiz_from_openai_with_difficulty(quiz_topic, 'Medium', count)
     
     # Add difficulty metadata to each question
     for i, q in enumerate(openai_questions):
@@ -1224,34 +1274,42 @@ def quiz():
     return render_template('quiz.html')  
 
 @app.route('/milestones/<int:user_id>/<int:course_id>')
-# @login_required
 def get_course_milestones(user_id, course_id):
-    # Fetch total quizzes in the course
-    total_quizzes = db.session.query(Quizzes).filter(
-        Quizzes.courses_id == course_id
-    ).count()
-
-    # Fetch completed quizzes in the course
-    from sqlalchemy import func, distinct
+    """Calculate course progress based on competencies instead of completed quizzes."""
+    
+    # Get student
     student = Students.query.filter_by(user_id=user_id).first()
-    completed_quizzes = db.session.query(func.count(distinct(Student_Progress.quiz_id))).join(Quizzes).filter(
-    Student_Progress.student_id == student.id,
-    Student_Progress.action == 'complete',
-    Quizzes.courses_id == course_id
-).scalar()
-
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
     
+    # Get student progress for the course
+    progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
+    if not progress:
+        return jsonify({
+            "student_id": user_id,
+            "course_id": course_id,
+            "completed_competencies": 0,
+            "total_competencies": 0,
+            "completion_percentage": 0
+        })
 
-    completion_percentage = (completed_quizzes / total_quizzes * 100) if total_quizzes > 0 else 0
-    
+    # Extract competencies (assuming `python_intro_competencies` is a dictionary field)
+    competencies = progress.python_intro_competencies
+    # Count total and completed competencies
+    total_competencies = len(competencies)
+    completed_competencies = sum(1 for level, _ in competencies.values() if level in ["Competent", "Mastery"])
+
+    # Calculate percentage progress
+    completion_percentage = (completed_competencies / total_competencies * 100) if total_competencies > 0 else 0
 
     return jsonify({
         "student_id": user_id,
         "course_id": course_id,
-        "completed_quizzes": completed_quizzes,
-        "total_quizzes": total_quizzes,
-        "completion_percentage": round(completion_percentage, 2)
+        "completed_competencies": completed_competencies,
+        "total_competencies": total_competencies,
+        "completion_percentage": round(completion_percentage, 1)
     })
+
 
 
 
@@ -1344,6 +1402,74 @@ def balanced_recommendations(student_id):
         "reinforcement quizzes": weak_quizzes,
         "advanced_engagement quizzes": strong_quizzes
     })
+
+@app.route("/submit_feedback", methods=["POST"])
+@login_required
+def submit_feedback():
+    data = request.json
+    course_id = data.get("course_id")
+    rating = data.get("rating")
+    topics_of_interest = data.get("topics_of_interest")
+    user_id = current_user.id  
+
+    feedback = CourseFeedback(user_id=user_id, course_id=course_id, rating=rating, topics_of_interest=topics_of_interest)
+    db.session.add(feedback)
+    db.session.commit()
+
+    return jsonify({"message": "Feedback saved!"}), 200
+
+
+@app.route("/course/<int:course_id>/students")
+@login_required
+def view_students(course_id):
+    # Get the teacher associated with the logged-in user
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    if not teacher:
+        flash("You are not authorized to view this page.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Check if the teacher owns the course
+    course = Courses.query.filter_by(id=course_id, teacher_id=teacher.id).first()
+    if not course:
+        flash("You do not have permission to view students for this course.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Get students enrolled in this course
+    enrolled_students = (
+        db.session.query(Students)
+        .join(CourseEnrollment, Students.id == CourseEnrollment.student_id)
+        .filter(CourseEnrollment.course_id == course_id)
+        .order_by(Students.name.asc())
+        .all()
+    )
+
+    return render_template("view_students.html", course=course, students=enrolled_students)
+
+@app.route('/course/<int:course_id>/students/student_profile/<int:student_id>')
+@login_required
+def student_profile(course_id, student_id):
+    if current_user.user_type != 'teacher':
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Fetch the course to ensure it exists and the teacher has access
+    course = Courses.query.filter_by(id=course_id).first()
+    if not course:
+        flash("Course not found.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Fetch the student
+    student = Students.query.filter_by(id=student_id).first()
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for('view_students', course_id=course_id))
+
+    # Fetch the student progress
+    progress = Student_Progress.query.filter_by(student_id=student_id, course_id=course_id).first()
+    
+    competencies = progress.python_intro_competencies if progress else None
+    
+    return render_template('student_profile.html', user=student.user_id, student=student, course=course, competencies=competencies)
 
 
 if __name__ == "__main__":
