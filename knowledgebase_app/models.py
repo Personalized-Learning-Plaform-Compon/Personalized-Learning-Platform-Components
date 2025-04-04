@@ -88,6 +88,7 @@ class Student_Progress(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.quiz_id'), nullable=False)
     score = db.Column(db.Numeric(5, 2), nullable=False)
     topic = db.Column(db.String(255), nullable=False)

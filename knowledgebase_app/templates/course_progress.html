@@ -3,7 +3,14 @@
 {% block content %}
 <div class="max-w-4xl mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg">
     <h1 class="text-3xl font-bold text-gray-800 text-center">Course Progress</h1>
-    <p class="text-gray-600 mt-4">Here you can view detailed progress for the course: <strong>{{ course.name }}</strong>.</p>
+    <p class="text-gray-600 mt-4">
+        Here you can view detailed progress for the course: <strong>{{ course.name }}</strong>. <br>
+        Competence levels include: 
+        <span class="text-yellow-500">Familiarity</span>, 
+        <span style="color: #16a34a;">Competent</span>, 
+        and <span class="text-blue-500">Mastery</span>. 
+        Students must reach at least a <strong style="color: #16a34a;">competent</strong> level in order to increase progress.
+    </p>
 
     {% if competencies %}
         <div class="overflow-x-auto mt-6">
@@ -23,8 +30,8 @@
                                     <span class="text-red-500">None</span>
                                 {% elif competence_level == 'Familiarity' %}
                                     <span class="text-yellow-500">Familiarity</span>
-                                {% elif competence_level == 'Competence' %}
-                                    <span class="text-green-500">Competence</span>
+                                {% elif competence_level == 'Competent' %}
+                                    <span style="color: #16a34a;">Competent</span>
                                 {% elif competence_level == 'Mastery' %}
                                     <span class="text-blue-500">Mastery</span>
                                 {% else %}

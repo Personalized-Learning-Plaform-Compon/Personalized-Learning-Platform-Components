@@ -7,8 +7,8 @@ def generate_quiz_from_openai(quiz_topic:str):
     load_dotenv()
     
     CONTENT_PROMPT = f"""
-    Hello! You are a Tutor. You are helping a student who wants to improve their understanding in various topics.
-    Generate 5 questions about "{quiz_topic}" in JSON format as follows: """ + """
+    Hello! You are a Tutor. You are helping a student who wants to improve their understanding in various computer topics.
+    Generate 10 questions about "{quiz_topic}" in JSON format as follows: """ + """
     [
         {
             "question":"question text goes here",

@@ -304,7 +304,7 @@ def course_progress(course_id):
     # Get the current student instance
     student = Students.query.filter_by(user_id=current_user.id).first()
     # Check if progress exists
-    progress = Student_Progress.query.filter_by(student_id=student.id).first()
+    progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
     if not progress:
         progress = Student_Progress(
             student_id=student.id,
@@ -314,6 +314,7 @@ def course_progress(course_id):
             time_spent=0,
             action="",
             attempt_date=datetime.now(),
+            course_id=course_id
         )
         db.session.add(progress)
         db.session.commit() 
@@ -566,9 +567,24 @@ def course_page(course_id):
     else:
         recs = fetch_google_sites('python challenges')
         google_links = [(i['url'], i['title']) for i in recs]
-    
+
+    progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
+    if not progress:
+        progress = Student_Progress(
+            student_id=student.id,
+            quiz_id=1,
+            score=0,
+            topic="initial progress",
+            time_spent=0,
+            action="",
+            attempt_date=datetime.now(),
+            course_id=course_id
+        )
+        db.session.add(progress)
+        db.session.commit() 
+    competencies = [capitalize_important_words(i[0]) for i in progress.python_intro_competencies.items()]
     # Pass the course to the template
-    return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student, recs=recs, yt_links=yt_links, google_links=google_links)
+    return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student, recs=recs, yt_links=yt_links, google_links=google_links, competencies=competencies)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -1114,7 +1130,7 @@ def generate_initial_questions(quiz_topic, count=5):
     questions = []
     
     # Use OpenAI to generate questions with difficulty parameter
-    openai_questions = generate_quiz_from_openai_with_difficulty(quiz_topic, 'Medium', count)
+    openai_questions = generate_quiz_from_openai_with_difficulty(quiz_topic, 'Easy', count)
     
     # Add difficulty metadata to each question
     for i, q in enumerate(openai_questions):
@@ -1165,8 +1181,8 @@ def generate_quiz_from_openai_with_difficulty(quiz_topic, difficulty, count=5):
     difficulty_desc = difficulty_descriptions.get(difficulty, difficulty_descriptions['Medium'])
     
     CONTENT_PROMPT = f"""
-    Hello! You are a Tutor. You are helping a student who wants to improve their understanding in various topics.
-    Generate {count} {difficulty.lower()} difficulty questions about "{quiz_topic}" in JSON format. 
+    Hello! You are a Tutor. You are helping a student who wants to improve their understanding in intro to computer science topics.
+    Generate {count} {difficulty.lower()} difficulty questions about "{quiz_topic}" in JSON format but not JSON related. 
     
     These should be {difficulty_desc}.
     
