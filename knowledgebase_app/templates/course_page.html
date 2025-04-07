@@ -315,8 +315,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 questionDiv.className = 'mb-4 p-4 bg-white rounded-lg shadow-md';
                 
                 const questionText = document.createElement('h4');
-                questionText.className = 'font-semibold mb-2';
-                questionText.textContent = `${index + 1}. ${question.question}`;
+                questionText.className = 'font-semibold mb-2 text-left';
+                questionText.innerHTML = `${index + 1}. ${question.question.replace(/\n/g, '<br>')}`;
                 questionDiv.appendChild(questionText);
                 
                 question.choices.forEach((choice, choiceIndex) => {
