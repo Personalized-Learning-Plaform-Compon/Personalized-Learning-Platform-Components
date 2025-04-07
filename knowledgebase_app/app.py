@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os
+from random import randint
 import requests
 import re
 import json
@@ -543,18 +544,6 @@ def course_page(course_id):
             for category in categories:
                 if category.strip().lower() in student.learning_style.lower():
                     suggested_content.append(file)
-    yt_links = None
-    google_links = None
-    if student.learning_style == 'Visual' or student.learning_style == 'Auditory':
-        recs = fetch_youtube_videos('python')
-        yt_links = [i['url'] for i in recs]
-    elif student.learning_style == 'Reading/Writing':
-        recs = fetch_google_sites('python')
-        google_links = [(i['url'], i['title']) for i in recs]
-    else:
-        recs = fetch_google_sites('python challenges')
-        google_links = [(i['url'], i['title']) for i in recs]
-
     progress = Student_Progress.query.filter_by(student_id=student.id, course_id=course_id).first()
     if not progress:
         progress = Student_Progress(
@@ -570,6 +559,25 @@ def course_page(course_id):
         db.session.add(progress)
         db.session.commit() 
     competencies = [capitalize_important_words(i[0]) for i in progress.python_intro_competencies.items()]
+    weaknesses = [i[0] for i in progress.python_intro_competencies.items() if i[1][0] in ['None', 'Familiarity']]
+    # Get a random weakness
+    random_weakness_index = randint(0, len(weaknesses) - 1)
+    random_weakness = weaknesses[random_weakness_index] 
+    python_topics = ['lists', '2d lists', 'advanced containers', 'pseudocode', 'while loops', 'for loops', 'conditional statements', 'data and data types', 'variables and constants']
+    if random_weakness in python_topics:
+        random_weakness = f"python {random_weakness}"
+    yt_links = None
+    google_links = None
+    if student.learning_style == 'Visual' or student.learning_style == 'Auditory':
+        recs = fetch_youtube_videos(random_weakness)
+        yt_links = [i['url'] for i in recs]
+    elif student.learning_style == 'Reading/Writing':
+        recs = fetch_google_sites(random_weakness)
+        google_links = [(i['url'], i['title']) for i in recs]
+    else:
+        recs = fetch_google_sites(f"{random_weakness} exercises")
+        google_links = [(i['url'], i['title']) for i in recs]
+
     # Pass the course to the template
     return render_template('course_page.html', course=course, suggested_content=suggested_content, student=student, recs=recs, yt_links=yt_links, google_links=google_links, competencies=competencies)
 
