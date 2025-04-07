@@ -1232,7 +1232,7 @@ def generate_quiz_from_openai_with_difficulty(quiz_topic, difficulty, count=5):
     
     CONTENT_PROMPT = f"""
     Hello! You are a Tutor. You are helping a student who wants to improve their understanding in intro to computer science topics.
-    Generate {count} {difficulty.lower()} difficulty questions about "{quiz_topic}" in JSON format but not JSON related. 
+    Generate {count} {difficulty.lower()} difficulty questions about "{quiz_topic}" in JSON format but not JSON related. Use Python for programming language questions.
     
     These should be {difficulty_desc}.
     
