@@ -146,8 +146,10 @@ def register():
                     preferred_topics=None,
                     strengths=None,
                     weaknesses=None,
-                    learning_style=None
+                    learning_style=None,
+                    classification=form.classification.data  # New field added
                 )
+                
 
             elif user.user_type == 'teacher':
                 registered_user = Teachers(
@@ -193,6 +195,34 @@ def profile():
     form = StudentProfileForm()
     
     return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
+
+#Update profile details such as classification and interests
+@app.route('/update_profile_details', methods=['POST'])
+@login_required
+def update_profile_details():
+    user = db.session.get(User, session.get('_user_id'))
+    if not user or user.user_type != 'student':
+        flash("Invalid operation.", "danger")
+        return redirect(url_for('profile'))
+    
+    student = Students.query.filter_by(user_id=user.id).first()
+    if not student:
+        flash("Student profile not found.", "danger")
+        return redirect(url_for('profile'))
+    
+    # Get updated details from the form
+    student.interests = request.form.get("interests")
+    student.classification = request.form.get("classification")
+    
+    try:
+        db.session.commit()
+        flash("Profile updated successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while updating your profile. Please try again.", "danger")
+    
+    return redirect(url_for('profile'))
+
 
 @app.route('/update_learning_style', methods=['POST'])
 @login_required

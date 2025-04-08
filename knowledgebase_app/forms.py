@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, PasswordField, SubmitField, RadioField
 from wtforms.validators import DataRequired, EqualTo, Optional
+from wtforms import StringField
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -15,6 +16,7 @@ class RegistrationForm(FlaskForm):
     password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
     school = StringField('School', validators=[DataRequired()])
     user_type = RadioField('User Type', choices=[('student', 'Student'), ('teacher', 'Teacher'),  ("program_manager", "Program Manager")], validators=[DataRequired()])
+    classification = StringField("Classification (e.g, Freshman, Sophomore, Junior, Senior)", [Optional()])
     submit = SubmitField('Register')
 
 class StudentProfileForm(FlaskForm):
