@@ -17,7 +17,7 @@ from sqlalchemy import func, distinct
 import openai 
 from openai import OpenAI
 from forms import LoginForm, RegistrationForm, StudentProfileForm
-from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent, CourseFeedback
+from models import User, db, Students, Student_Progress, Quizzes, Teachers, Courses, CourseEnrollment, Folder, CourseContent, CourseFeedback, ProgramManagers
 from recommendations import fetch_youtube_videos, fetch_google_sites
 from supabase import create_client, Client
 from sqlalchemy.orm.attributes import flag_modified
@@ -133,6 +133,7 @@ def register():
                 school=form.school.data,
                 user_type=form.user_type.data
             )
+            
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()
@@ -156,6 +157,12 @@ def register():
                     user_id=user.id,
                     name=f"{form.fname.data} {form.lname.data}",
                     classes=None,
+                )
+
+            elif user.user_type == 'program_manager':
+                registered_user = ProgramManagers(
+                    user_id=user.id,
+                    name=f"{form.fname.data} {form.lname.data}",
                 )
 
             db.session.add(registered_user)

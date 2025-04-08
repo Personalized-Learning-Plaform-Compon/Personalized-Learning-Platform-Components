@@ -48,6 +48,13 @@ class Students(db.Model):
     learning_pace = db.Column(db.JSON, default={})
     user = db.relationship('User', backref=db.backref('students', lazy=True))
 
+class ProgramManagers(db.Model):
+    __tablename__ = 'program_managers'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+
 class Teachers(db.Model):
     __tablename__ = 'teachers'
 
