@@ -196,13 +196,12 @@ def profile():
     
     return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
 
-#Update profile details such as classification and interests
-@app.route('/update_profile_details', methods=['POST'])
+@app.route('/update_profile', methods=['GET', 'POST'])
 @login_required
 def update_profile_details():
     user = db.session.get(User, session.get('_user_id'))
     if not user or user.user_type != 'student':
-        flash("Invalid operation.", "danger")
+        flash("Profile update not available.", "danger")
         return redirect(url_for('profile'))
     
     student = Students.query.filter_by(user_id=user.id).first()
@@ -210,18 +209,21 @@ def update_profile_details():
         flash("Student profile not found.", "danger")
         return redirect(url_for('profile'))
     
-    # Get updated details from the form
-    student.interests = request.form.get("interests")
-    student.classification = request.form.get("classification")
+    if request.method == "POST":
+        # Retrieve updated fields from the form
+        student.interests = request.form.get("interests")
+        student.classification = request.form.get("classification")
+        try:
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while updating your profile. Please try again.", "danger")
+        return redirect(url_for('profile'))
     
-    try:
-        db.session.commit()
-        flash("Profile updated successfully!", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash("An error occurred while updating your profile. Please try again.", "danger")
-    
-    return redirect(url_for('profile'))
+    form = StudentProfileForm()
+    # Render the update profile page and pre-fill fields with current data
+    return render_template('profile.html', user=user, student=student, form=form)
 
 
 @app.route('/update_learning_style', methods=['POST'])
