@@ -196,7 +196,7 @@ def profile():
     
     return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
 
-@app.route('/update_profile', methods=['GET', 'POST'])
+@app.route('/update_profile_details', methods=['GET', 'POST'])
 @login_required
 def update_profile_details():
     user = db.session.get(User, session.get('_user_id'))
