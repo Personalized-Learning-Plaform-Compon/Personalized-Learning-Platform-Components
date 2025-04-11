@@ -1374,54 +1374,6 @@ def analyze_strengths_weaknesses(user_id):
 
     return {"strengths/weaknesses": "strengths/weaknesses", "student_id": user_id, "strengths": strengths, "weaknesses": weaknesses}
 
-# @app.route('/recommendations/<int:user_id>')
-# def recommend_content(user_id):
-#     from sqlalchemy.orm import aliased
-
-#     analysis = analyze_strengths_weaknesses(user_id)
-#     strengths = analysis['strengths']
-#     weaknesses = analysis['weaknesses']
-   
-#     student = Students.query.filter_by(user_id=user_id).first()
-#     # Query quizzes for weak areas
-#     weak_recommendations = db.session.query(
-#         Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.score
-#     ).filter(
-#         Quizzes.topic.in_(weaknesses),
-#         Quizzes.difficulty.in_(['Easy', 'Medium'])  # Recommend easier quizzes for weak areas
-#     ).all()
-
-#     # Query quizzes where the student scored high (e.g., above 80%)
-#     strong_recommendations = db.session.query(
-#         Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.score
-#     ).filter(
-#         Student_Progress.student_id == student.id,
-#         Student_Progress.score > 75  # Threshold for strong performance
-#     ).all()
-
-#     # Separate quizzes into weak and strong areas
-#     weak_areas_quizzes = set()
-#     strong_areas_quizzes = set()
-
-#     for quiz_id, topic, difficulty, score in weak_recommendations:
-#         # If student scored high on a "weak topic," move it to strong area instead
-#         if (quiz_id, topic, difficulty, score) in strong_recommendations:
-#             strong_areas_quizzes.add((quiz_id, topic, difficulty))
-#         else:
-#             weak_areas_quizzes.add((quiz_id, topic, difficulty))
-
-#     for topic in strong_recommendations:
-#         if {"topic": topic} not in strong_areas_quizzes:
-#             strong_areas_quizzes.add((topic))
-            
-#     weak_areas_quizzes = [{"quiz_id": q[0], "topic": q[1], "difficulty": q[2]} for q in weak_areas_quizzes]
-#     strong_areas_quizzes = [{"quiz_id": q[0], "topic": q[1], "difficulty": q[2]} for q in strong_areas_quizzes]
-#     return jsonify({
-#         "student_id": user_id,
-#         "weak_areas_quizzes": weak_areas_quizzes,
-#         "strong_areas_quizzes": strong_areas_quizzes
-#     })
-
 
 @app.route('/recommendations/<int:user_id>')
 def recommend_content(user_id):
@@ -1482,33 +1434,6 @@ def recommend_content(user_id):
         "weak_areas_quizzes": weak_areas_quizzes,
         "strong_areas_quizzes": strong_areas_quizzes
     })
-
-
-# @app.route('/balanced_recommendations/<int:student_id>')
-# def balanced_recommendations(student_id):
-#     weak_recommendations = db.session.query(
-#        Student_Progress.quiz_id, Student_Progress.topic, Student_Progress.time_spent
-
-#     ).filter(
-#         Student_Progress.student_id == student_id,
-#         Student_Progress.time_spent < 90,  # High engagement
-#     ).limit(2).all()
-#     # Fetch strengths based on high completion & long time spent
-#     strong_recommendations = db.session.query(
-#          Student_Progress.quiz_id, Student_Progress.topic, Student_Progress.time_spent
-#     ).filter(
-#         Student_Progress.student_id == student_id,
-#         Student_Progress.time_spent > 180,  # High engagement
-#     ).limit(2).all()
-
-#     weak_quizzes = [{"topic":x.topic, "quiz_id": x.quiz_id, "time_spent": x.time_spent} for x in weak_recommendations]
-#     strong_quizzes = [{"topic":r.topic, "quiz_id": r.quiz_id, "time_spent": r.time_spent} for r in strong_recommendations]
-#     return jsonify({
-#         "balanced_recommendations": "balanced reommendations",
-#         "student": student_id,
-#         "reinforcement quizzes": weak_quizzes,
-#         "advanced_engagement quizzes": strong_quizzes
-#     })
 
 @app.route("/submit_feedback", methods=["POST"])
 @login_required
@@ -1577,6 +1502,32 @@ def student_profile(course_id, student_id):
     competencies = progress.python_intro_competencies if progress else None
     
     return render_template('student_profile.html', user=student.user_id, student=student, course=course, competencies=competencies)
+
+@app.route('/admin/feedback')
+def admin_feedback():
+    feedback_data = db.session.query(
+        CourseFeedback.course_id,
+        db.func.avg(CourseFeedback.rating).label('average_rating'),
+        db.func.count(CourseFeedback.id).label('total_feedback'),
+        db.func.string_agg(CourseFeedback.topics_of_interest, '; ').label('topics')
+    ).group_by(CourseFeedback.course_id).all()
+
+    # You may also want to join with Courses for course names
+    course_info = {
+        course.id: course.name for course in Courses.query.all()
+    }
+
+    results = []
+    for course_id, avg_rating, count, topics in feedback_data:
+        results.append({
+            "course_id": course_id,
+            "course_name": course_info.get(course_id, "Unknown Course"),
+            "average_rating": round(avg_rating, 2),
+            "total_feedback": count,
+            "topics": topics
+        })
+
+    return render_template('admin_feedback.html', feedback=results)
 
 
 if __name__ == "__main__":
