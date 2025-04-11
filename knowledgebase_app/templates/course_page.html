@@ -495,7 +495,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateRecommendations(containerId, quizzes) {
       const list = document.getElementById(containerId);
       list.innerHTML = quizzes.length ? "" : "<li>No recommendations available.</li>";
-  
+    
       quizzes.forEach(quiz => {
         let item = document.createElement("li");
         item.innerHTML = `
