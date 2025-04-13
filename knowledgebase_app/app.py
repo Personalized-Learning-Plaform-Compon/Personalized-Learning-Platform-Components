@@ -493,19 +493,50 @@ def my_courses():
         course_id = int(request.form.get('delete_course'))
         course = Courses.query.get(course_id)
         if course and course.teacher_id == teacher.id:
+            try:
+                # Delete all associated folders and their files
+                folders = Folder.query.filter_by(course_id=course_id).all()
+                for folder in folders:
+                    # Delete all files in the folder
+                    files = CourseContent.query.filter_by(folder_id=folder.id).all()
+                    for file in files:
+                        # Delete file from cloud storage
+                        if file.file_extension != "youtube":
+                            bucket_name = "course-content"
+                            try:
+                                supabase.storage.from_(bucket_name).remove([file.file_url])
+                            except Exception as e:
+                                flash(f"Error deleting file from cloud storage: {str(e)}", "danger")
+                        # Delete file from vector store if applicable
+                        if file.vector_store_file_id:
+                            try:
+                                openai_client.vector_stores.files.delete(
+                                    vector_store_id=course.vector_store_id,
+                                    file_id=file.vector_store_file_id
+                                )
+                                openai_client.files.delete(file.vector_store_file_id)
+                            except openai.OpenAIError as e:
+                                flash(f"Warning: Could not remove file from vector store. Error: {str(e)}", "warning")
+                        # Delete file from the database
+                        db.session.delete(file)
+                    # Delete the folder itself
+                    db.session.delete(folder)
 
-            # Remove course vector store
-            if course.vector_store_id:
-                try:
-                    openai_client.vector_stores.delete(course.vector_store_id)
-                except openai.OpenAIError as e:
-                    flash(f"Error deleting vector store: {str(e)}", "danger")
+                # Remove course vector store
+                if course.vector_store_id:
+                    try:
+                        openai_client.vector_stores.delete(course.vector_store_id)
+                    except openai.OpenAIError as e:
+                        flash(f"Error deleting vector store: {str(e)}", "danger")
 
-            # Delete the course and related enrollments
-            CourseEnrollment.query.filter_by(course_id=course_id).delete()
-            db.session.delete(course)
-            db.session.commit()
-            flash("Course deleted successfully.", "success")
+                # Delete the course and related enrollments
+                CourseEnrollment.query.filter_by(course_id=course_id).delete()
+                db.session.delete(course)
+                db.session.commit()
+                flash("Course deleted successfully.", "success")
+            except Exception as e:
+                db.session.rollback()
+                flash(f"An error occurred while deleting the course: {str(e)}", "danger")
         else:
             flash("You can only delete your own courses.", "danger")
         return redirect(url_for('my_courses'))
