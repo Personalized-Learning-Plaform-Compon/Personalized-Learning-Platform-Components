@@ -515,6 +515,42 @@ def my_courses():
 
     return render_template('my_courses.html', teacher=teacher, teacher_courses=teacher_courses)
 
+@app.route('/all_courses', methods=['GET'])
+@login_required
+def all_courses():
+    # Ensure the user is a program manager
+    if current_user.user_type != "program_manager":
+        flash("Only program managers can view all courses.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Fetch all courses with teacher information
+    courses = db.session.query(Courses, Teachers).join(Teachers, Courses.teacher_id == Teachers.id).all()
+
+    return render_template('all_courses.html', courses=courses)
+
+@app.route('/course_details/<int:course_id>', methods=['GET'])
+@login_required
+def course_details(course_id):
+    # Fetch the course and its teacher
+    course = Courses.query.get_or_404(course_id)
+    teacher = Teachers.query.get_or_404(course.teacher_id)
+
+    # Ensure the user has permission to view the course
+    if current_user.user_type not in ["program_manager", "teacher", "student"]:
+        flash("You do not have permission to view this course.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Get students enrolled in this course
+    enrolled_students = (
+        db.session.query(Students)
+        .join(CourseEnrollment, Students.id == CourseEnrollment.student_id)
+        .filter(CourseEnrollment.course_id == course_id)
+        .order_by(Students.name.asc())
+        .all()
+    )
+
+    return render_template('course_details.html', course=course, teacher=teacher, students=enrolled_students)
+
 @app.route('/add_course', methods=['GET', 'POST'])
 @login_required
 def add_course():
@@ -1480,7 +1516,7 @@ def view_students(course_id):
 @app.route('/course/<int:course_id>/students/student_profile/<int:student_id>')
 @login_required
 def student_profile(course_id, student_id):
-    if current_user.user_type != 'teacher':
+    if current_user.user_type not in ['teacher', 'program_manager']:
         flash("You do not have permission to view this page.", "danger")
         return redirect(url_for('dashboard'))
 

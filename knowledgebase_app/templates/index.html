@@ -70,9 +70,11 @@
                     {% if current_user.user_type == "student" %}
                         <li><a href="{{ url_for('survey') }}" class="hover:text-gray-300">Learning Quiz</a></li>
                         <li><a href="{{ url_for('dashboard') }}" class="hover:text-gray-300">Dashboard</a></li>
-                        <!-- <li><a href="{{ url_for('quiz') }}" class="hover:text-gray-300">Quiz</a></li> -->
                     {% elif current_user.user_type == "teacher" %}
                         <li><a href="{{ url_for('my_courses') }}" class="hover:text-gray-300">My Courses</a></li>
+                    
+                    {% elif current_user.user_type == "program_manager" %}
+                        <li><a href="{{ url_for('all_courses')}}" class="hover:text-gray-300">All Courses</a></li>
                     {% endif %}
                 {% else %}
                     <li><a href="{{ url_for('login') }}" class="hover:text-gray-300">Login/Register</a></li>

@@ -48,10 +48,17 @@
     </div>
 
     <div class="mt-6 flex justify-center">
-        <a href="{{ url_for('view_students', course_id=course.id) }}" 
-           class="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
-            Back to Students List
-        </a>
+        {% if current_user.user_type == "program_manager" %}
+            <a href="{{ url_for('course_details', course_id=course.id) }}" 
+               class="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                Back to Course Details
+            </a>
+        {% else %}
+            <a href="{{ url_for('view_students', course_id=course.id) }}" 
+               class="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                Back to Students List
+            </a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

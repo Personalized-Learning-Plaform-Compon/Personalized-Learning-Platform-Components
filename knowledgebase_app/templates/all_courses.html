@@ -1,0 +1,66 @@
+{% extends "index.html" %}
+
+{% block content %}
+<title>All Courses</title>
+
+<div class="dashboard-container">
+    <h2 class="text-3xl font-semibold text-center mb-6">All Courses</h2>
+    
+    {% if courses %}
+      <div class="courses grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+        {% for course, teacher in courses %}
+          <div class="course-card bg-white shadow-lg rounded-lg p-6">
+            <h3 class="text-xl font-semibold">{{ course.name }}</h3>
+            <p class="text-gray-700">Taught by: <em>{{ teacher.name }}</em></p>
+            <a href="{{ url_for('course_details', course_id=course.id) }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 inline-block">View Course</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-center text-gray-600">No courses available.</p>
+    {% endif %}
+</div>
+
+<style>
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.courses {
+  gap: 20px;
+}
+
+.course-card {
+  position: relative;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgb(190, 191, 243);
+  width: 300px;
+  text-align: center;
+}
+
+.blue-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 10px 5px;
+  border-radius: 5px;
+  text-decoration: none;
+  color: white;
+  background-color: #007BFF;
+}
+
+@media (max-width: 768px) {
+  .courses {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}
