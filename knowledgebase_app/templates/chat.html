@@ -140,6 +140,7 @@
     var courseName = "{{ course.name }}";
     var learningStyle = "{{ student.learning_style }}";
     var learningPace = "{{ student.learning_pace }}";
+    var interests = {{ student.interests | tojson | safe }};
     var vectorStoreId = "{{ course.vector_store_id }}";
     
 
@@ -173,7 +174,8 @@
                 message: message, 
                 courseName: courseName, 
                 learningStyle: learningStyle, 
-                learningPace: learningPace, 
+                learningPace: learningPace,
+                interests: interests,
                 vectorStoreId: vectorStoreId
             });
 

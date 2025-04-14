@@ -21,6 +21,8 @@ from models import User, db, Students, Student_Progress, Quizzes, Teachers, Cour
 from recommendations import fetch_youtube_videos, fetch_google_sites
 from supabase import create_client, Client
 from sqlalchemy.orm.attributes import flag_modified
+import html
+import markdown2
 
 
 from generate_quiz import generate_quiz_from_openai
@@ -1073,7 +1075,18 @@ def handle_message(data):
     courseName = data.get("courseName", "")
     learningStyle = data.get("learningStyle", "")
     learningPace = data.get("learningPace", "")
+    interests = data.get("interests", [])
     vectorStoreId = data.get("vectorStoreId", "").strip()
+    
+    # Make sure interests are a list
+    if not isinstance(interests, list):
+        try:
+            interests = json.loads(interests)
+        except (json.JSONDecodeError, TypeError):
+            interests = [str(interests)]
+    
+    # Now join it as a string
+    interests_str = ", ".join(interests)
 
     # Identify user session (assuming they have a unique session ID)
     user_id = session.get("user_id")  # Use request.sid if user_id isn't stored in session
@@ -1087,8 +1100,7 @@ def handle_message(data):
             "model": "gpt-4o-mini",
             "instructions": f"You are a tutor specializing in {courseName}. "
                             f"Adapt to the student's learning style: {learningStyle} and pace: {learningPace}. "
-                            f"Do not answer questions unrelated to the course material. "
-                            f"Give your responses in HTML format, and don't include <html>, <meta>, <DOCTYPE>, <title>, <head>, or <body> tags, however, <h> tags are fine.",
+                            f"Relate responses to student's interests ({interests_str}) when possible (like in examples) and focus only on the course. ",
             "input": user_message,
             "tools": [{
                 "type": "file_search",
@@ -1105,14 +1117,14 @@ def handle_message(data):
 
         response = openai_client.responses.create(**request_params)
 
-        # Extract response text
+        # Get the AI response text (already in markdown format)
         ai_response = response.output[-1].content[0].text
 
-        # Store the latest response ID for this user session
-        user_sessions[user_id] = response.id
+        # Just convert directly — no wrapping
+        ai_response_html = markdown2.markdown(ai_response, extras=["fenced-code-blocks", "code-friendly"])
 
-        # Emit response back to the client
-        emit("receive_message", {"message": ai_response}, broadcast=True)
+        # Emit clean HTML
+        emit("receive_message", {"message": ai_response_html}, broadcast=True)
 
     except Exception as e:
         emit("receive_message", {"message": f"Error: {str(e)}"})
