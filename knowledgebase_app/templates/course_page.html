@@ -257,8 +257,8 @@ document.addEventListener("DOMContentLoaded", function () {
           </div>
           
           <!-- Quiz Generation Area -->
-          <div id="quiz-{{ student.id }}" class="quiz-container">
-              <button onclick="generateQuiz('{{ competency }}')" 
+          <div id="quiz-{{ student.id }}-{{ loop.index }}" class="quiz-container max-w-4xl mx-auto">
+            <button onclick="generateQuiz(event, '{{ competency }}')" 
                  class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
                   Take Quiz
               </button>
@@ -276,8 +276,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("DOMContentLoaded", function () {
         const courseId = {{ course.id|tojson }};
         let quizStartTime = null; 
-        function generateQuiz(topic) {
-            const quizContainer = document.querySelector(`div[id^="quiz-"]`);
+        function generateQuiz(event, topic){
+            const quizContainer = event.target.closest('.quiz-container');
             quizStartTime = Date.now(); 
             quizContainer.innerHTML = `
                 <div class="flex items-center justify-center">
