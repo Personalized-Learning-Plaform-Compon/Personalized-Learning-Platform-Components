@@ -206,31 +206,31 @@ def profile():
 @app.route('/update_profile_details', methods=['GET', 'POST'])
 @login_required
 def update_profile_details():
-    user = db.session.get(User, session.get('_user_id'))
-    if not user or user.user_type != 'student':
-        flash("Profile update not available.", "danger")
-        return redirect(url_for('profile'))
-    
-    student = Students.query.filter_by(user_id=user.id).first()
-    if not student:
-        flash("Student profile not found.", "danger")
-        return redirect(url_for('profile'))
-    
-    if request.method == "POST":
-        # Retrieve updated fields from the form
-        student.interests = request.form.get("interests")
-        student.classification = request.form.get("classification")
-        try:
+    user_id = session.get('_user_id')
+    user = db.session.get(User, user_id)
+    form = StudentProfileForm()
+    if form.validate_on_submit():
+        student = Students.query.filter_by(user_id=current_user.id).first()
+        if student:
+            # Save classification and interests
+            student.classification = form.classification.data
+            # Get the raw string from the form
+            raw_interests = form.interests.data
+
+            # Convert to actual Python list of dicts
+            try:
+                student.interests = [tag['value'] for tag in json.loads(raw_interests)]
+            except json.JSONDecodeError:
+                interests = []  # fallback if something goes wrong
             db.session.commit()
             flash("Profile updated successfully!", "success")
-        except Exception as e:
-            db.session.rollback()
-            flash("An error occurred while updating your profile. Please try again.", "danger")
-        return redirect(url_for('profile'))
-    
-    form = StudentProfileForm()
-    # Render the update profile page and pre-fill fields with current data
-    return render_template('profile.html', user=user, student=student, form=form)
+        else:
+            flash("Student profile not found.", "danger")
+    else:
+        flash("Invalid input. Please try again.", "danger")
+
+    formatted_learning_methods = session.get('formatted_learning_methods', None)
+    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
 
 
 @app.route('/update_learning_style', methods=['POST'])
