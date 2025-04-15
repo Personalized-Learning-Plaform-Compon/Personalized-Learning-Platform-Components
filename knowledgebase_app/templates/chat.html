@@ -40,6 +40,7 @@
         border-radius: 9999px;
         transition: background-color 0.3s;
         box-sizing: border-box; /* Ensure padding is included in the width */
+        transition: transform 0.1s ease;
     }
     #send-button:hover {
         background-color: #2563eb;
@@ -109,7 +110,45 @@
         font-weight: 600; /* font-semibold */
     }
     .message-bubble {
-    margin-bottom: 1rem; /* Add this line to create space between messages */
+        margin-bottom: 1rem; /* Add this line to create space between messages */
+        border-radius: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    #send-button:active {
+        transform: scale(0.95);
+    }
+
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .slide-in-left {
+        animation: slideInLeft 0.4s ease-out;
+    }
+    .slide-in-right {
+        animation: slideInRight 0.4s ease-out;
+    }
+
+    /* Bot bubble upgrade */
+    .bg-bot {
+        background: linear-gradient(to bottom right, #f8f9fa, #e2e8f0); /* light gray gradient */
+        color: #1f2937; /* slate-800 */
+        border: 1px solid #d1d5db; /* Tailwind's gray-300 */
     }
     
 </style>
@@ -192,19 +231,23 @@
         messageBubble.className = "px-4 py-2 rounded-lg max-w-[50%] break-words whitespace-pre-wrap shadow-md text-left mb-2 chat-content message-bubble";
 
         // Keep messages aligned to the left for both user and bot
-        messageDiv.className = "flex justify-start"; 
+        messageDiv.className = "flex justify-start fade-in"; 
         
         if (sender === "user") {
             messageBubble.className += " bg-blue-500 text-white"; // Blue bubble for user messages
+            messageBubble.classList.add("slide-in-right");
         } else {
-            messageBubble.className += " bg-white text-gray-800 border border-gray-300"; // White bubble for bot messages
+            messageBubble.className += " bg-bot";
+            messageBubble.classList.add("slide-in-left");
         }
 
-        // Replace \n with <br> for proper line breaks
+        
         messageBubble.innerHTML = message.replace(/\n/g, '<br>');
         messageDiv.appendChild(messageBubble);
         chatContainer.appendChild(messageDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+
     }
 
     socket.on("receive_message", function(data) {
