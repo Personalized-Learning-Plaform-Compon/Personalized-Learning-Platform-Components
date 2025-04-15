@@ -396,7 +396,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert(`Quiz submitted! Your score: ${scorePercentage}%`);
                 
                 form.innerHTML = `
-                    <button onclick="generateQuiz('${topic}')" 
+                    <button onclick="generateQuiz(event, '${topic}')"  
                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
                         Generate New Adaptive Quiz
                     </button>
@@ -501,7 +501,6 @@ document.addEventListener("DOMContentLoaded", function () {
         item.innerHTML = `
           <div class="quiz-card">
             <p><strong>Topic:</strong> ${quiz.topic}</p>
-            <p><strong>Quiz ID:</strong> ${quiz.quiz_id}</p>
             <span class="difficulty-tag ${quiz.difficulty.toLowerCase()}">${quiz.difficulty}</span>
           </div>
         `;
