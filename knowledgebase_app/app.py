@@ -21,6 +21,8 @@ from models import User, db, Students, Student_Progress, Quizzes, Teachers, Cour
 from recommendations import fetch_youtube_videos, fetch_google_sites
 from supabase import create_client, Client
 from sqlalchemy.orm.attributes import flag_modified
+import html
+import markdown2
 
 
 from generate_quiz import generate_quiz_from_openai
@@ -206,31 +208,31 @@ def profile():
 @app.route('/update_profile_details', methods=['GET', 'POST'])
 @login_required
 def update_profile_details():
-    user = db.session.get(User, session.get('_user_id'))
-    if not user or user.user_type != 'student':
-        flash("Profile update not available.", "danger")
-        return redirect(url_for('profile'))
-    
-    student = Students.query.filter_by(user_id=user.id).first()
-    if not student:
-        flash("Student profile not found.", "danger")
-        return redirect(url_for('profile'))
-    
-    if request.method == "POST":
-        # Retrieve updated fields from the form
-        student.interests = request.form.get("interests")
-        student.classification = request.form.get("classification")
-        try:
+    user_id = session.get('_user_id')
+    user = db.session.get(User, user_id)
+    form = StudentProfileForm()
+    if form.validate_on_submit():
+        student = Students.query.filter_by(user_id=current_user.id).first()
+        if student:
+            # Save classification and interests
+            student.classification = form.classification.data
+            # Get the raw string from the form
+            raw_interests = form.interests.data
+
+            # Convert to actual Python list of dicts
+            try:
+                student.interests = [tag['value'] for tag in json.loads(raw_interests)]
+            except json.JSONDecodeError:
+                interests = []  # fallback if something goes wrong
             db.session.commit()
             flash("Profile updated successfully!", "success")
-        except Exception as e:
-            db.session.rollback()
-            flash("An error occurred while updating your profile. Please try again.", "danger")
-        return redirect(url_for('profile'))
-    
-    form = StudentProfileForm()
-    # Render the update profile page and pre-fill fields with current data
-    return render_template('profile.html', user=user, student=student, form=form)
+        else:
+            flash("Student profile not found.", "danger")
+    else:
+        flash("Invalid input. Please try again.", "danger")
+
+    formatted_learning_methods = session.get('formatted_learning_methods', None)
+    return render_template('profile.html', user=user, student=student, form=form, formatted_learning_methods=formatted_learning_methods)
 
 
 @app.route('/update_learning_style', methods=['POST'])
@@ -1073,7 +1075,18 @@ def handle_message(data):
     courseName = data.get("courseName", "")
     learningStyle = data.get("learningStyle", "")
     learningPace = data.get("learningPace", "")
+    interests = data.get("interests", [])
     vectorStoreId = data.get("vectorStoreId", "").strip()
+    
+    # Make sure interests are a list
+    if not isinstance(interests, list):
+        try:
+            interests = json.loads(interests)
+        except (json.JSONDecodeError, TypeError):
+            interests = [str(interests)]
+    
+    # Now join it as a string
+    interests_str = ", ".join(interests)
 
     # Identify user session (assuming they have a unique session ID)
     user_id = session.get("user_id")  # Use request.sid if user_id isn't stored in session
@@ -1087,8 +1100,7 @@ def handle_message(data):
             "model": "gpt-4o-mini",
             "instructions": f"You are a tutor specializing in {courseName}. "
                             f"Adapt to the student's learning style: {learningStyle} and pace: {learningPace}. "
-                            f"Do not answer questions unrelated to the course material. "
-                            f"Give your responses in HTML format, and don't include <html>, <meta>, <DOCTYPE>, <title>, <head>, or <body> tags, however, <h> tags are fine.",
+                            f"Relate responses to student's interests ({interests_str}) when possible (like in examples) and focus only on the course. ",
             "input": user_message,
             "tools": [{
                 "type": "file_search",
@@ -1105,14 +1117,14 @@ def handle_message(data):
 
         response = openai_client.responses.create(**request_params)
 
-        # Extract response text
+        # Get the AI response text (already in markdown format)
         ai_response = response.output[-1].content[0].text
 
-        # Store the latest response ID for this user session
-        user_sessions[user_id] = response.id
+        # Just convert directly — no wrapping
+        ai_response_html = markdown2.markdown(ai_response, extras=["fenced-code-blocks", "code-friendly"])
 
-        # Emit response back to the client
-        emit("receive_message", {"message": ai_response}, broadcast=True)
+        # Emit clean HTML
+        emit("receive_message", {"message": ai_response_html}, broadcast=True)
 
     except Exception as e:
         emit("receive_message", {"message": f"Error: {str(e)}"})

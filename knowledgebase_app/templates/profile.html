@@ -23,6 +23,14 @@
             <div>
                 <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
                 <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
+                <p><strong>Classification:</strong> {{ student.classification }}</p>
+                <p><strong>Interests:</strong> 
+                    {% if student.interests %}
+                        {{ student.interests | join(', ') }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </p>
 
 
             </div>
@@ -55,21 +63,25 @@
         <!-- Button to update the current profile content -->
 
          <!-- Additional profile details form -->
-         <form method="POST" action="{{ url_for('update_profile_details') }}" class="mt-6">
+        <form method="POST" action="{{ url_for('update_profile_details') }}" class="mt-6">
             {{ form.hidden_tag() }}
-            <label class="block text-gray-700 font-medium mb-1">Interests:</label>
-            <input type="text" name="interests" value="{{ student.interests or '' }}"
-                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <label class="block text-gray-700 font-medium mb-1">Interests (max 10):</label>
+            {{ form.interests(class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-left", id="interests", placeholder="eg., Music") }}
             
-                   <label class="block text-gray-700 font-medium mb-1 mt-4">Classification:</label> <!-- TO DO: move to register page -->
-                   <input type="text" name="classification" value="{{ student.classification or '' }}"
-                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <label class="block text-gray-700 font-medium mb-1 mt-4">Classification:</label> <!-- TO DO: move to register page -->
+            <div class="gap-8 text-gray-700">
+                {% for subfield in form.classification %}
+                <label class="inline-flex items-center mr-2">
+                    {{ subfield(class="mr-2") }}
+                    <span class="ml-2">{{ subfield.label.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
 
+            <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                Update Profile
+            </button>
         </form>
-
-        <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
-            Update Profile
-        </button>
         {% endif %}
 
         {% if formatted_learning_methods and user.user_type == 'student' %}
@@ -84,6 +96,40 @@
         </a>
     </div>
 </div>
+
+<!-- Tagify CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+
+<!-- Tagify JS -->
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+
+<script>
+    // Predefined interests (can be pulled from backend if needed)
+    const predefinedInterests = [
+      "Art", "Music", "Science", "Mathematics", "Physics", "Chemistry", "Biology",
+  "Computer Science", "Engineering", "Economics", "History", "Philosophy",
+  "Psychology", "Sociology", "Political Science", "Environmental Science",
+  "Astronomy", "Geography", "Painting", "Drawing", "Photography", "Writing",
+  "Soccer", "Basketball", "Tennis", "Swimming", "Running", "Coding",
+  "Web Development", "Game Development", "Robotics", "Artificial Intelligence",
+  "Traveling", "Cooking", "Gardening", "Public Speaking", "Languages",
+  "Space Exploration", "Marine Biology", "Video Games", "Anime", "Movies"
+      
+    ];
+  
+    // Init Tagify on the interests input
+    const input = document.querySelector('#interests');
+    const tagify = new Tagify(input, {
+      whitelist: predefinedInterests,
+      enforceWhitelist: false, // Allow custom entries
+      maxTags: 10,
+      dropdown: {
+        enabled: 1, // Show suggestions after 1 character
+        maxItems: 10,
+        classname: "custom-suggestions"
+      }
+    });
+  </script>
 
 {% endblock %}
 

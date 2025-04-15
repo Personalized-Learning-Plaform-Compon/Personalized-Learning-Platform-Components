@@ -8,6 +8,14 @@
         <div class="text-center">
             <p><strong>Learning Style:</strong> {{ student.learning_style }}</p>
             <p><strong>Learning Pace:</strong> {{ student.learning_pace }}</p>
+            <p><strong>Classification:</strong> {{ student.classification }}</p>
+            <p><strong>Interests:</strong> 
+                {% if student.interests %}
+                    {{ student.interests | join(', ') }}
+                {% else %}
+                    None
+                {% endif %}
+            </p>
         </div>
 
         {% if competencies %}

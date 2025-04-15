@@ -12,3 +12,4 @@ openai
 flask-socketio
 markdown
 supabase 
+markdown2

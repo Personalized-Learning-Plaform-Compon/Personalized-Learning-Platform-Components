@@ -64,9 +64,9 @@
         <!-- User Type Selection -->
         <div class="mb-4">
             <label class="block text-gray-700 font-semibold">User Type:</label>
-            <div class="flex gap-4 text-gray-700">
+            <div class="gap-4 text-gray-700">
                 {% for subfield in form.user_type %}
-                    <label class="flex items-center">
+                    <label class="inline-flex items-center mr-2">
                         {{ subfield(class="mr-2") }}
                         <span class="hover:text-blue-600">{{ subfield.label.text }}</span>
                     </label>

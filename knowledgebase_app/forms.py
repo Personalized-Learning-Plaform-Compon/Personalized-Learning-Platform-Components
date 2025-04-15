@@ -36,4 +36,16 @@ class StudentProfileForm(FlaskForm):
         ('Normal', 'Normal'),
         ('Fast', 'Fast')
     ], validators=[Optional()])
+    interests = StringField('Interests', validators=[Optional()])
+    classification = RadioField(
+        'Classification',
+        choices=[
+            ('Freshman', 'Freshman'),
+            ('Sophomore', 'Sophomore'),
+            ('Junior', 'Junior'),
+            ('Senior', 'Senior')
+        ],
+        default='Freshman'  # Set a default value if needed
+    )
     submit = SubmitField('Submit')
+
