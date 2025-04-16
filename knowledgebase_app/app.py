@@ -1583,19 +1583,35 @@ def student_profile(course_id, student_id):
     return render_template('student_profile.html', user=student.user_id, student=student, course=course, competencies=competencies)
 
 @app.route('/admin/feedback')
+@login_required
 def admin_feedback():
+    # Ensure the user is a teacher
+    if current_user.user_type != "teacher":
+        flash("Only teachers can view this page.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Get the teacher's record
+    teacher = Teachers.query.filter_by(user_id=current_user.id).first()
+    if not teacher:
+        flash("Teacher record not found.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Get the courses owned by the teacher
+    teacher_courses = Courses.query.filter_by(teacher_id=teacher.id).all()
+    teacher_course_ids = [course.id for course in teacher_courses]
+
+    # Query feedback for the teacher's courses
     feedback_data = db.session.query(
         CourseFeedback.course_id,
         db.func.avg(CourseFeedback.rating).label('average_rating'),
         db.func.count(CourseFeedback.id).label('total_feedback'),
         db.func.string_agg(CourseFeedback.topics_of_interest, '; ').label('topics')
-    ).group_by(CourseFeedback.course_id).all()
+    ).filter(CourseFeedback.course_id.in_(teacher_course_ids)).group_by(CourseFeedback.course_id).all()
 
-    # You may also want to join with Courses for course names
-    course_info = {
-        course.id: course.name for course in Courses.query.all()
-    }
+    # Get course names for the teacher's courses
+    course_info = {course.id: course.name for course in teacher_courses}
 
+    # Format the results
     results = []
     for course_id, avg_rating, count, topics in feedback_data:
         results.append({
