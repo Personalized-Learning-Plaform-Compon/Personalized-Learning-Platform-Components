@@ -1475,10 +1475,8 @@ def recommend_content(user_id):
     # Query for strong performance
     strong_recommendations = db.session.query(
         Quizzes.quiz_id, Quizzes.topic, Quizzes.difficulty, Quizzes.score
-    ).join(Student_Progress, Quizzes.quiz_id == Student_Progress.quiz_id
     ).filter(
-        Student_Progress.student_id == student.id,
-        Student_Progress.score > 75
+        Quizzes.topic.in_(strengths),
     ).all()
 
     # Keep track of topics already added
