@@ -1,7 +1,12 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-YOUTUBE_API_KEY = "AIzaSyD7a_CHfuD97Feq7viloGSGVSAvkbs3B-4"
-SEARCH_ENGINE_ID = '84c73da0137314611'
+# Load environment variables from .env file
+load_dotenv()
+# Ensure that the environment variables are set
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
 
 def fetch_youtube_videos(topic):
     search_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={topic}&type=video&maxResults=5&key={YOUTUBE_API_KEY}"
